@@ -47,12 +47,12 @@ export default function Index() {
       const loginData = { email, password };
 
       if (email === "admin@gmail.com" && password === "*Admin123") {
-        Alert.alert("Login successful!");
         // navigate to home page
         router.push("/home");
       }
       // Here you would typically send the loginData to your backend
       console.log("Logging in with data:", loginData);
+      router.push("/home");
     }
   };
 
