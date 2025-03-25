@@ -12,7 +12,7 @@ export default function RootLayout() {
   };
 
   return (
-    <Stack screenOptions={{ headerShown: false}}>
+    <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="register" />
       <Stack.Screen
@@ -43,6 +43,16 @@ export default function RootLayout() {
             </View>
           ),
         }}
+      />
+      <Stack.Screen 
+      name="transfer" 
+      options={{
+        headerShown: true,
+        headerTitle: "",
+        headerLeft: () => (
+          <Text className="ml-4 text-2xl font-bold">Transfer</Text>
+        ),
+      }}
       />
     </Stack>
   );

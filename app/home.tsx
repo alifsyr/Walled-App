@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 export default function Home() {
   const user = {
@@ -63,7 +64,10 @@ export default function Home() {
             <TouchableOpacity className="bg-[#007BFF] w-10 h-10 rounded-lg justify-center items-center shadow-md">
               <FontAwesome name="plus" size={20} color="white" />
             </TouchableOpacity>
-            <TouchableOpacity className="bg-[#007BFF] w-10 h-10 rounded-lg justify-center items-center shadow-md">
+            <TouchableOpacity
+              className="bg-[#007BFF] w-10 h-10 rounded-lg justify-center items-center shadow-md"
+              onPress={() => router.push("/transfer")}
+            >
               <FontAwesome name="send" size={20} color="white" />
             </TouchableOpacity>
           </View>
@@ -71,7 +75,9 @@ export default function Home() {
         <View className="mt-6 flex-1">
           <Text className="text-xl font-bold mb-4">Transaction History</Text>
           <View className="h-[300px]">
-            <Text className="text-black text-3xl font-bold mb-4">Transaction History</Text>
+            <Text className="text-black text-3xl font-bold mb-4">
+              Transaction History
+            </Text>
             <ScrollView>
               <View className="border p-4 w-[350px] rounded-2xl bg-white border-gray-200 mb-4">
                 <View className="flex-row justify-between items-center">

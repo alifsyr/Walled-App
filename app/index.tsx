@@ -53,6 +53,8 @@ export default function Index() {
       // Here you would typically send the loginData to your backend
       console.log("Logging in with data:", loginData);
       router.push("/home");
+    } else {
+      router.push("/home");
     }
   };
 
