@@ -15,6 +15,7 @@ export default function RootLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
       <Stack.Screen name="register" />
+      <Stack.Screen name="set-pin" />
       <Stack.Screen
         name="home"
         options={{
@@ -44,15 +45,25 @@ export default function RootLayout() {
           ),
         }}
       />
-      <Stack.Screen 
-      name="transfer" 
-      options={{
-        headerShown: true,
-        headerTitle: "",
-        headerLeft: () => (
-          <Text className="ml-4 text-2xl font-bold">Transfer</Text>
-        ),
-      }}
+      <Stack.Screen
+        name="transfer"
+        options={{
+          headerShown: true,
+          headerTitle: "",
+          headerLeft: () => (
+            <Text className="ml-4 text-2xl font-bold">Transfer</Text>
+          ),
+        }}
+      />
+      <Stack.Screen
+        name="topup"
+        options={{
+          headerShown: true,
+          headerTitle: "",
+          headerLeft: () => (
+            <Text className="ml-4 text-2xl font-bold">Top Up</Text>
+          ),
+        }}
       />
     </Stack>
   );
