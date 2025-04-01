@@ -11,7 +11,8 @@ import {
 import InlineDropdown from "@/components/InlineDropdown";
 
 export default function Transfer() {
-  const [selectedValue, setSelectedValue] = useState<string>();
+  const [sof, setSoF] = useState<string>();
+  const [beneficiary, setBeneficiary] = useState<string>();
   const [amount, setAmount] = useState("");
   const [notes, setNotes] = useState("");
 
@@ -34,7 +35,7 @@ export default function Transfer() {
     setNotes(limitedText);
   };
 
-  const isTransferDisabled = !selectedValue || !amount;
+  const isTransferDisabled = !sof || !amount || !beneficiary;
 
   const handleTransfer = () => {
     if (isTransferDisabled) return;
@@ -43,15 +44,16 @@ export default function Transfer() {
 
     Alert.alert(
       "Transfer Confirmation",
-      `Transfer Rp ${numericAmount.toLocaleString()} from ${selectedValue}\nNotes: ${notes || "(none)"}`,
+      `Transfer Rp ${numericAmount.toLocaleString()} from ${sof}\nto ${beneficiary}\nNotes: ${notes || "(none)"}`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Confirm",
           onPress: () => {
             console.log("Transferring:", {
-              source: selectedValue,
+              source: sof,
               amount: numericAmount,
+              beneficiary: beneficiary,
               notes,
             });
             Alert.alert("Success", "Transfer completed!");
@@ -65,6 +67,23 @@ export default function Transfer() {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View className="flex-1 bg-[#FAFBFD] p-4 relative">
         <View className="flex items-center gap-4 pb-20">
+          {/* Dropdown Destination Section */}
+          <View className="p-2 w-full max-w-md rounded-2xl bg-[#0061FF]">
+            <View className="flex-row items-center">
+              <InlineDropdown
+                label="To"
+                containerColor="#0061FF"
+                containerStyle={{ flexDirection: "row" }}
+                containerSize={"90%"}
+                fontSize={20}
+                fontColor="#fff"
+                data={["234789", "123456", "456789"]}
+                onSelect={(value) => setBeneficiary(value || "")}
+                placeholder="Beneficiary List"
+              />
+            </View>
+          </View>
+
           {/* Amount Section */}
           <View className="flex-row items-center justify-between p-4 w-full max-w-md rounded-2xl bg-white">
             <View className="flex-1">
@@ -86,8 +105,8 @@ export default function Transfer() {
           <View className="p-2 w-full max-w-md rounded-2xl bg-white">
             <InlineDropdown
               data={["Walled", "LinkAja", "OVO"]}
-              onSelect={(value) => setSelectedValue(value || "")}
-              placeholder="Select Source"
+              onSelect={(value) => setSoF(value || "")}
+              placeholder="Source of Fund"
             />
           </View>
 
