@@ -37,7 +37,6 @@ const mockTransactions = [
   },
 ];
 
-
 export default function Home() {
   const user = {
     name: "John Doe",
@@ -123,7 +122,10 @@ export default function Home() {
             </View>
           </View>
           <View className="flex-col gap-5 mr-2">
-            <TouchableOpacity className="bg-[#007BFF] w-10 h-10 rounded-lg justify-center items-center">
+            <TouchableOpacity
+              className="bg-[#007BFF] w-10 h-10 rounded-lg justify-center items-center"
+              onPress={() => router.push("/topup")}
+            >
               <FontAwesome name="plus" size={20} color="white" />
             </TouchableOpacity>
             <TouchableOpacity

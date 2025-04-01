@@ -16,7 +16,7 @@ const InlineDropdown: React.FC<InlineDropdownProps> = ({
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string | null>(null);
   const [items, setItems] = useState(
-    data.map((item) => ({ label: item, value: item }))
+    data.map((item) => ({ label: item, value: item })),
   );
 
   useEffect(() => {
@@ -28,7 +28,7 @@ const InlineDropdown: React.FC<InlineDropdownProps> = ({
       setValue(selectedValue);
       onSelect(selectedValue);
     },
-    [onSelect]
+    [onSelect],
   );
 
   return (
