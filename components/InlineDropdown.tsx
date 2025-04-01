@@ -1,82 +1,79 @@
-import React, { useState } from "react";
-import {
-    View,
-    Text,
-    TouchableOpacity,
-    FlatList,
-} from "react-native";
-import PropTypes from "prop-types";
+import React, { useState, useEffect, useCallback } from "react";
+import { View, StyleSheet } from "react-native";
+import DropDownPicker from "react-native-dropdown-picker";
 
-/**
- * A customizable inline dropdown component for React Native
- * @param {Object} props - Component props
- * @param {Array<string>} props.data - Array of options to display in the dropdown
- * @param {Function} props.onSelect - Callback function when an option is selected
- * @param {string} [props.placeholder] - Placeholder text when no option is selected
- * @param {Object} [props.buttonStyle] - Custom style for the trigger button
- * @param {Object} [props.dropdownStyle] - Custom style for the dropdown container
- */
-const InlineDropdown: React.FC<{
-    data: string[];
-    onSelect: (item: string) => void;
-    placeholder?: string;
-    buttonStyle?: object;
-    dropdownStyle?: object;
-}> = ({
-    data,
-    onSelect,
-    placeholder = "Select an option",
-    dropdownStyle,
+interface InlineDropdownProps {
+  data: string[];
+  onSelect: (selectedValue: string | null) => void;
+  placeholder?: string;
+}
+
+const InlineDropdown: React.FC<InlineDropdownProps> = ({
+  data,
+  onSelect,
+  placeholder = "Select an option",
 }) => {
-    const [isDropdownVisible, setDropdownVisible] = useState(false);
-    const [selectedValue, setSelectedValue] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+  const [value, setValue] = useState<string | null>(null);
+  const [items, setItems] = useState(
+    data.map((item) => ({ label: item, value: item }))
+  );
 
-    const toggleDropdown = () => setDropdownVisible(!isDropdownVisible);
+  useEffect(() => {
+    setItems(data.map((item) => ({ label: item, value: item })));
+  }, [data]);
 
-    const handleSelect = (item: string) => {
-        setSelectedValue(item);
-        onSelect(item);
-        setDropdownVisible(false);
-    };
+  const handleChangeValue = useCallback(
+    (selectedValue: string | null) => {
+      setValue(selectedValue);
+      onSelect(selectedValue);
+    },
+    [onSelect]
+  );
 
-    return (
-        <View className="m-5 z-10">
-            <TouchableOpacity
-                className={`p-4 bg-blue-500 rounded-lg `}
-                onPress={toggleDropdown}
-            >
-                <Text className="text-white text-center font-bold text-base">
-                    {selectedValue || placeholder}
-                </Text>
-            </TouchableOpacity>
-
-            {isDropdownVisible && (
-                <View className={`mt-2 rounded shadow-lg max-h-52 ${dropdownStyle}`}>
-                    <FlatList
-                        data={data}
-                        keyExtractor={(item) => item}
-                        renderItem={({ item }) => (
-                            <TouchableOpacity
-                                className="p-4 border-b border-gray-300"
-                                onPress={() => handleSelect(item)}
-                            >
-                                <Text className="text-base text-gray-800">{item}</Text>
-                            </TouchableOpacity>
-                        )}
-                        keyboardShouldPersistTaps="always"
-                    />
-                </View>
-            )}
-        </View>
-    );
+  return (
+    <View className="z-10">
+      <DropDownPicker
+        open={open}
+        value={value}
+        items={items}
+        setOpen={setOpen}
+        setValue={setValue}
+        setItems={setItems}
+        placeholder={placeholder}
+        onChangeValue={handleChangeValue}
+        style={styles.dropdownPicker}
+        dropDownContainerStyle={styles.dropdownContainer}
+        textStyle={styles.dropdownText}
+        placeholderStyle={styles.placeholderText}
+      />
+    </View>
+  );
 };
 
-InlineDropdown.propTypes = {
-    data: PropTypes.arrayOf(PropTypes.string.isRequired).isRequired,
-    onSelect: PropTypes.func.isRequired,
-    placeholder: PropTypes.string,
-    buttonStyle: PropTypes.object,
-    dropdownStyle: PropTypes.object,
-};
+const styles = StyleSheet.create({
+  dropdownPicker: {
+    borderWidth: 0,
+    borderColor: "transparent",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    elevation: 2,
+  },
+  dropdownContainer: {
+    borderWidth: 0,
+    borderColor: "transparent",
+    backgroundColor: "#fff",
+    borderRadius: 8,
+    elevation: 2,
+  },
+  dropdownText: {
+    fontSize: 20,
+    color: "#333",
+  },
+  placeholderText: {
+    fontSize: 20,
+    color: "#999",
+  },
+});
 
 export default InlineDropdown;
