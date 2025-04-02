@@ -1,5 +1,6 @@
-import { Stack } from "expo-router";
-import { Image, View, Text } from "react-native";
+import { Stack, router } from "expo-router";
+import { Image, View, Text, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import "../global.css";
 
 export default function RootLayout() {
@@ -12,7 +13,13 @@ export default function RootLayout() {
   };
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
+    <Stack
+      screenOptions={{
+        animation: "simple_push",
+        animationDuration: 200,
+        headerShown: false,
+      }}
+    >
       <Stack.Screen name="index" />
       <Stack.Screen name="register" />
       <Stack.Screen name="set-pin" />
@@ -50,8 +57,14 @@ export default function RootLayout() {
         options={{
           headerShown: true,
           headerTitle: "",
+          animation: "simple_push",
           headerLeft: () => (
-            <Text className="ml-4 text-2xl font-bold">Transfer</Text>
+            <View className="flex-row items-center">
+              <TouchableOpacity onPress={() => router.back()}>
+                <Ionicons name="chevron-back" size={24} color="black" />
+              </TouchableOpacity>
+              <Text className="text-2xl font-bold ml-2">Transfer</Text>
+            </View>
           ),
         }}
       />
@@ -60,8 +73,14 @@ export default function RootLayout() {
         options={{
           headerShown: true,
           headerTitle: "",
+          animation: "simple_push",
           headerLeft: () => (
-            <Text className="ml-4 text-2xl font-bold">Top Up</Text>
+            <View className="flex-row items-center">
+              <TouchableOpacity onPress={() => router.back()}>
+                <Ionicons name="chevron-back" size={24} color="black" />
+              </TouchableOpacity>
+              <Text className="text-2xl font-bold ml-2">Top Up</Text>
+            </View>
           ),
         }}
       />
