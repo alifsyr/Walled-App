@@ -9,6 +9,7 @@ import {
   Alert,
 } from "react-native";
 import InlineDropdown from "@/components/InlineDropdown";
+import { router } from "expo-router";
 
 export default function Transfer() {
   const [sof, setSoF] = useState<string>();
@@ -44,7 +45,7 @@ export default function Transfer() {
 
     Alert.alert(
       "Transfer Confirmation",
-      `Transfer Rp ${numericAmount.toLocaleString()} from ${sof}\nto ${beneficiary}\nNotes: ${notes || "(none)"}`,
+      `Transfer Rp ${numericAmount.toLocaleString()} from ${sof}\nto ${beneficiary}\nNotes: ${notes || " - "}`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -53,10 +54,15 @@ export default function Transfer() {
             console.log("Transferring:", {
               source: sof,
               amount: numericAmount,
-              beneficiary: beneficiary,
-              notes,
+              notes: notes?.trim() || "-",
             });
-            Alert.alert("Success", "Transfer completed!");
+
+            Alert.alert("Success", "Transfer completed!", [
+              {
+                text: "OK",
+                onPress: () => router.replace("/home"),
+              },
+            ]);
           },
         },
       ],
