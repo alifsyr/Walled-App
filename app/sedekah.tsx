@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
 import {
   View,
   Text,
-  TextInput,
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
@@ -18,15 +17,6 @@ const DEFAULT_SOURCE = "walled";
 
 export default function Sedekah() {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
-  const [accountBalance, setAccountBalance] = useState(0);
-
-  useEffect(() => {
-    const fetchBalance = async () => {
-      const mockBalance = 8000000;
-      setAccountBalance(mockBalance);
-    };
-    fetchBalance();
-  }, []);
 
   const handleConfirm = useCallback(() => {
     if (!selectedAmount) return;

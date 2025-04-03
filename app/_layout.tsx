@@ -1,5 +1,5 @@
 import { Stack, router } from "expo-router";
-import { Image, View, Text, TouchableOpacity } from "react-native";
+import { Image, View, Text, TouchableOpacity, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import "../global.css";
 
@@ -10,6 +10,20 @@ export default function RootLayout() {
     accountNumber: "1234567890",
     profileImage: require("@/assets/images/profile-pict.jpg"),
     accountType: "Personal Account",
+  };
+
+  const handleLogout = () => {
+    Alert.alert("Logout", "Are you sure you want to log out?", [
+      {
+        text: "Cancel",
+        style: "cancel",
+      },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: () => router.replace("/"),
+      },
+    ]);
   };
 
   return (
@@ -43,12 +57,9 @@ export default function RootLayout() {
             </View>
           ),
           headerRight: () => (
-            <View>
-              <Image
-                source={require("@/assets/images/theme-switcher.png")}
-                className="w-7 h-7"
-              />
-            </View>
+            <TouchableOpacity onPress={handleLogout}>
+              <Ionicons name="log-out-outline" size={24} color="black" />
+            </TouchableOpacity>
           ),
         }}
       />
@@ -86,25 +97,10 @@ export default function RootLayout() {
       />
       <Stack.Screen
         name="transaction-status"
-        options={{
-          headerShown: false,
-          animation: "simple_push",
-        }}
+        options={{ headerShown: false }}
       />
-      <Stack.Screen
-        name="input-pin"
-        options={{
-          headerShown: false,
-          animation: "simple_push",
-        }}
-      />
-      <Stack.Screen
-        name="sedekah"
-        options={{
-          headerShown: false,
-          animation: "simple_push",
-        }}
-      />
+      <Stack.Screen name="input-pin" options={{ headerShown: false }} />
+      <Stack.Screen name="sedekah" options={{ headerShown: false }} />
     </Stack>
   );
 }
