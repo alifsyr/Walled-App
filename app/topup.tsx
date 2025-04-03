@@ -1,15 +1,17 @@
 import React, { useState } from "react";
 import {
-  View,
+  Alert,
+  Keyboard,
   Text,
   TextInput,
-  TouchableWithoutFeedback,
-  Keyboard,
   TouchableOpacity,
-  Alert,
+  TouchableWithoutFeedback,
+  View,
 } from "react-native";
-import InlineDropdown from "@/components/InlineDropdown";
+
 import { router } from "expo-router";
+
+import InlineDropdown from "@/components/InlineDropdown";
 
 export default function Topup() {
   const [sof, setSoF] = useState<string | undefined>();
@@ -58,12 +60,29 @@ export default function Topup() {
               notes: notes?.trim() || "-",
             });
 
-            Alert.alert("Success", "Top Up completed!", [
-              {
-                text: "OK",
-                onPress: () => router.replace("/home"),
+            // Simulate success and redirect
+            router.replace({
+              pathname: "/transaction-status",
+              params: {
+                status: "success",
+                type: "Top Up",
+                source: sof,
+                amount: numericAmount,
+                notes: notes?.trim() || "-",
+                time: new Date().toLocaleTimeString("id-ID", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: false,
+                }),
               },
-            ]);
+            });
+
+            // If failure scenario is needed later:
+            // router.replace({ pathname: "/transaction-status", params: { status: "failed" } });
           },
         },
       ],

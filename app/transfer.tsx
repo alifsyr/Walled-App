@@ -57,12 +57,30 @@ export default function Transfer() {
               notes: notes?.trim() || "-",
             });
 
-            Alert.alert("Success", "Transfer completed!", [
-              {
-                text: "OK",
-                onPress: () => router.replace("/home"),
+            // Simulate success and redirect
+            router.replace({
+              pathname: "/transaction-status",
+              params: {
+                status: "success",
+                type: "Transfer",
+                beneficiary: beneficiary,
+                source: sof,
+                amount: numericAmount,
+                notes: notes?.trim() || "-",
+                time: new Date().toLocaleTimeString("id-ID", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                  hour12: false,
+                }),
               },
-            ]);
+            });
+
+            // If failure scenario is needed later:
+            // router.replace({ pathname: "/transaction-status", params: { status: "failed" } });
           },
         },
       ],
