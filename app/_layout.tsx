@@ -84,6 +84,13 @@ export default function RootLayout() {
           ),
         }}
       />
+      <Stack.Screen
+        name="transaction-status"
+        options={{
+          headerShown: false,
+          animation: "simple_push",
+        }}
+      />
     </Stack>
   );
 }
