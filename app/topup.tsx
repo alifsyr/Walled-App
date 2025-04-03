@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import {
   Alert,
   Keyboard,
@@ -12,85 +12,66 @@ import {
 import { router } from "expo-router";
 
 import InlineDropdown from "@/components/InlineDropdown";
+import { generateTransactionId, formatCurrency } from "@/script/utils";
+
+// Constants
+const MAX_NOTE_LENGTH = 100;
 
 export default function Topup() {
-  const [sof, setSoF] = useState<string | undefined>();
-  const [amount, setAmount] = useState("");
+  const [sourceOfFund, setSourceOfFund] = useState<string | undefined>();
+  const [formattedAmount, setFormattedAmount] = useState("");
   const [notes, setNotes] = useState("");
 
-  const handleAmountChange = (text: string) => {
-    const numericValue = text.replace(/\D/g, "");
-    if (!numericValue) {
-      setAmount("");
+  const handleAmountChange = useCallback((text: string) => {
+    const digitsOnly = text.replace(/\D/g, "");
+    if (!digitsOnly) {
+      setFormattedAmount("");
       return;
     }
 
-    const numberValue = Number(numericValue);
+    const numberValue = Number(digitsOnly);
+    setFormattedAmount(formatCurrency(numberValue));
+  }, []);
 
-    const formatted = numberValue.toLocaleString("id-ID", {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-    setAmount(formatted);
-  };
+  const handleNotesChange = useCallback((text: string) => {
+    setNotes(text.slice(0, MAX_NOTE_LENGTH));
+  }, []);
 
-  const handleNotesChange = (text: string) => {
-    const limitedText = text.slice(0, 100);
-    setNotes(limitedText);
-  };
+  const isTopupDisabled = !sourceOfFund || !formattedAmount;
 
-  const isTopupDisabled = !sof || !amount;
-
-  const handleTopup = () => {
+  const handleTopup = useCallback(() => {
     if (isTopupDisabled) return;
 
-    const numericAmount = Number(amount.replace(/\./g, ""));
+    const numericAmount = Number(formattedAmount.replace(/\./g, ""));
+    const trimmedNotes = notes.trim() || "-";
+    const trxType = "Top Up";
+    const trxId = generateTransactionId(trxType);
+    const timestamp = new Date().toLocaleTimeString("id-ID", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
 
-    Alert.alert(
-      "Top Up Confirmation",
-      `Top Up Rp ${numericAmount.toLocaleString("id-ID")} from ${sof || "-"}\nNotes: ${notes?.trim() || "-"}`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Confirm",
-          onPress: () => {
-            console.log("Top Upping:", {
-              source: sof,
-              amount: numericAmount,
-              notes: notes?.trim() || "-",
-            });
+    // Navigate to PIN confirmation screen
+    router.push({
+      pathname: "/input-pin",
+      params: {
+        trxId,
+        type: trxType,
+        amount: numericAmount,
+        notes: trimmedNotes,
+        time: timestamp,
+        sourceOfFund: sourceOfFund,
+      },
+    });
+  }, [formattedAmount, sourceOfFund, notes, isTopupDisabled]);
 
-            // Simulate success and redirect
-            router.replace({
-              pathname: "/transaction-status",
-              params: {
-                status: "success",
-                type: "Top Up",
-                source: sof,
-                amount: numericAmount,
-                notes: notes?.trim() || "-",
-                time: new Date().toLocaleTimeString("id-ID", {
-                  day: "2-digit",
-                  month: "short",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                  second: "2-digit",
-                  hour12: false,
-                }),
-              },
-            });
-
-            // If failure scenario is needed later:
-            // router.replace({ pathname: "/transaction-status", params: { status: "failed" } });
-          },
-        },
-      ],
-    );
-  };
-
-  console.log("SoF:", sof);
-  console.log("Amount:", amount);
+  console.log("sourceOfFund:", sourceOfFund);
+  console.log("formattedAmount:", formattedAmount);
   console.log("Notes:", notes);
 
   return (
@@ -108,7 +89,7 @@ export default function Topup() {
                   placeholder="0"
                   keyboardType="numeric"
                   onChangeText={handleAmountChange}
-                  value={amount}
+                  value={formattedAmount}
                 />
               </View>
             </View>
@@ -118,8 +99,8 @@ export default function Topup() {
           <View className="p-2 w-full max-w-md rounded-2xl bg-white">
             <InlineDropdown
               data={["Walled", "LinkAja", "OVO"]}
-              onSelect={(value) => setSoF(value || "")}
-              placeholder="Select Source"
+              onSelect={(value) => setSourceOfFund(value || "")}
+              placeholder="Select Source of Fund"
             />
           </View>
 
@@ -133,6 +114,7 @@ export default function Topup() {
                   placeholder=""
                   onChangeText={handleNotesChange}
                   value={notes}
+                  autoCapitalize="none"
                 />
               </View>
             </View>
@@ -145,7 +127,7 @@ export default function Topup() {
             onPress={handleTopup}
             disabled={isTopupDisabled}
             className={`rounded-xl w-full max-w-md p-4 items-center ${
-              isTopupDisabled ? "bg-gray-400" : "bg-blue-500"
+              isTopupDisabled ? "bg-gray-400" : "bg-[#0061FF]"
             }`}
           >
             <Text className="text-white font-bold text-lg">Top Up</Text>

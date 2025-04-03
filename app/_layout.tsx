@@ -91,6 +91,13 @@ export default function RootLayout() {
           animation: "simple_push",
         }}
       />
+      <Stack.Screen
+        name="input-pin"
+        options={{
+          headerShown: false,
+          animation: "simple_push",
+        }}
+      />
     </Stack>
   );
 }

@@ -11,8 +11,16 @@ const renderDetailRow = (label: string, value: string | number | undefined) => (
 );
 
 export default function TransactionStatus() {
-  const { status, source, type, amount, notes, time, beneficiary, trxId } =
-    useLocalSearchParams();
+  const {
+    status,
+    sourceOfFund,
+    type,
+    amount,
+    notes,
+    time,
+    beneficiary,
+    trxId,
+  } = useLocalSearchParams();
   const router = useRouter();
 
   const isSuccess = status === "success";
@@ -51,7 +59,8 @@ export default function TransactionStatus() {
 
       <View className="bg-white rounded-2xl p-4 mt-6 w-full">
         {renderDetailRow("Transaction ID", String(trxId))}
-        {type === "Top Up" && renderDetailRow("Source of Fund", String(source))}
+        {type === "Top Up" &&
+          renderDetailRow("Source of Fund", String(sourceOfFund))}
         {type === "Transfer" &&
           renderDetailRow("Beneficiary", String(beneficiary))}
         {renderDetailRow("Type", String(type))}
