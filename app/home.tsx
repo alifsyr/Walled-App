@@ -138,7 +138,7 @@ export default function Home() {
         </View>
 
         {/* History Transaction Section */}
-        <View className="mt-6 h-[410px]">
+        <View className="mt-6 h-[350px]">
           <Text className="text-xl font-bold mb-4">Transaction History</Text>
 
           {/* Scrollable transaction list */}
