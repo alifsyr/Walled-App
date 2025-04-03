@@ -98,6 +98,13 @@ export default function RootLayout() {
           animation: "simple_push",
         }}
       />
+      <Stack.Screen
+        name="sedekah"
+        options={{
+          headerShown: false,
+          animation: "simple_push",
+        }}
+      />
     </Stack>
   );
 }

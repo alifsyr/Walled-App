@@ -12,6 +12,7 @@ export function generateTransactionId(type: string = "TX"): string {
   const typeCodeMap: Record<string, number> = {
     TOPUP: 1,
     TRANSFER: 2,
+    SEDEKAH: 3,
   };
 
   const normalizedType = type.replace(/\s+/g, "").toUpperCase();

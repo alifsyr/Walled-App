@@ -93,6 +93,7 @@ export default function ConfirmPin() {
             value={pin}
             onChangeText={handleChange}
             placeholder="Enter PIN"
+            placeholderTextColor={"#9CA3AF"}
             keyboardType="numeric"
             secureTextEntry
             maxLength={6}
