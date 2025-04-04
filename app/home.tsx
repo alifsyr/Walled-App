@@ -109,7 +109,7 @@ export default function Home() {
       {/* Report Section */}
       <View className="w-[90%] bg-white mt-4 rounded-2xl">
         <View className="flex-row justify-between items-center px-4 pt-4">
-          <Text className="text-lg font-bold">Report</Text>
+          <Text className="text-lg font-bold">Your Spending</Text>
           <ChartSwitcher
             chartType={chartType}
             onChartChange={setChartType}

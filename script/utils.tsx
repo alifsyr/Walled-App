@@ -35,3 +35,16 @@ export function formatCurrency(value: number): string {
     maximumFractionDigits: 0,
   });
 }
+
+/**
+ * Formats a number into a shortened IDR currency format
+ * @param value number to format
+ * @returns formatted shortened currency string
+ */
+export function formatCurrencyShort(value: number): string {
+  if (value >= 1_000_000_000)
+    return `Rp ${(value / 1_000_000_000).toFixed(1)}M`;
+  if (value >= 1_000_000) return `Rp ${(value / 1_000_000).toFixed(1)}Jt`;
+  if (value >= 1_000) return `Rp ${(value / 1_000).toFixed(0)}Ribu`;
+  return `Rp ${value}`;
+}

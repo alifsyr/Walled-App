@@ -65,7 +65,7 @@ export default function PieChartView({
           <Text className="text-2xl font-bold text-black">
             {savingsPercentage}%
           </Text>
-          <Text className="text-sm text-gray-500 mt-1">saving this period</Text>
+          <Text className="text-sm text-gray-500 mt-1">Saving This Period</Text>
         </View>
       </View>
 
