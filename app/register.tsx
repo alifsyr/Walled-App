@@ -12,6 +12,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { router, Link } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 import TermsAndConditions from "@/components/TermsAndConditions";
 
 const initialErrors = {
@@ -74,7 +75,11 @@ export default function Register() {
       setLoading(false);
 
       if (response.ok) {
-        Alert.alert("Success", data.message);
+        const { accessToken, refreshToken } = data.data;
+
+        await SecureStore.setItemAsync("accessToken", accessToken);
+        await SecureStore.setItemAsync("refreshToken", refreshToken);
+
         router.replace("/set-pin");
       } else {
         if (data.message === "Validation failed" && data.data) {
@@ -88,6 +93,7 @@ export default function Register() {
       }
     } catch (err) {
       setLoading(false);
+      console.error("Registration error:", err);
       Alert.alert(
         "Network Error",
         "Unable to register. Please try again later.",

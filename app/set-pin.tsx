@@ -9,34 +9,111 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
+import * as SecureStore from "expo-secure-store";
 
 export default function SetPin() {
   const [pin, setPin] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (text: string) => {
-    const digits = text.replace(/\D/g, ""); // remove non-numeric
-    if (digits.length <= 6) {
-      setPin(digits);
+    const onlyDigits = text.replace(/\D/g, "");
+    if (onlyDigits.length <= 6) {
+      setPin(onlyDigits);
     }
   };
 
-  const handleSubmit = () => {
-    if (pin.length < 6) {
-      Alert.alert("PIN must be 6 digits");
+  const handleSubmit = async () => {
+    if (pin.length !== 6) {
+      Alert.alert("PIN must be exactly 6 digits.");
       return;
     }
-    console.log("PIN set:", pin);
 
-    // Save the PIN to backend or secure store here
+    setLoading(true);
 
-    Alert.alert("PIN Created", "Your PIN has been set successfully.", [
-      {
-        text: "Continue",
-        onPress: () => router.replace("/home"), // redirect to home
-      },
-    ]);
+    try {
+      const accessToken = await SecureStore.getItemAsync("accessToken");
+
+      if (!accessToken) {
+        setLoading(false);
+        Alert.alert(
+          "Unauthorized",
+          "Access token missing. Please log in again.",
+        );
+        return;
+      }
+
+      // Step 1: Set the PIN
+      const pinRes = await fetch("http://localhost:8080/auth/set-pin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ pin }),
+      });
+
+      const pinData = await pinRes.json();
+
+      if (pinRes.status === 200) {
+        // Step 2: Try to create a wallet
+        const walletRes = await fetch("http://localhost:8080/api/wallets", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        });
+
+        const walletData = await walletRes.json();
+
+        switch (walletRes.status) {
+          case 201:
+            Alert.alert("Success", "PIN set and wallet created successfully.", [
+              { text: "Continue", onPress: () => router.replace("/home") },
+            ]);
+            break;
+          case 400:
+            Alert.alert(
+              "Note",
+              walletData.message || "User already has a wallet.",
+              [{ text: "Continue", onPress: () => router.replace("/home") }],
+            );
+            break;
+          case 403:
+            Alert.alert(
+              "Session Expired",
+              "Your session is invalid or expired.",
+            );
+            router.replace("/");
+            break;
+          default:
+            Alert.alert(
+              "Wallet Error",
+              walletData.message || "Something went wrong.",
+            );
+        }
+      } else if (pinRes.status === 400) {
+        Alert.alert(
+          "PIN Error",
+          pinData.message || "PIN has already been set.",
+        );
+      } else if (pinRes.status === 403) {
+        Alert.alert("Session Expired", "Your session is invalid or expired.");
+        router.replace("/");
+      } else {
+        Alert.alert("PIN Error", pinData.message || "Something went wrong.");
+      }
+    } catch (error) {
+      console.error("Error submitting PIN:", error);
+      Alert.alert(
+        "Network Error",
+        "Unable to complete the request. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -65,12 +142,16 @@ export default function SetPin() {
 
           <TouchableOpacity
             onPress={handleSubmit}
-            disabled={pin.length !== 6}
+            disabled={pin.length !== 6 || loading}
             className={`rounded-xl p-4 items-center ${
               pin.length === 6 ? "bg-blue-500" : "bg-gray-300"
             }`}
           >
-            <Text className="text-white font-semibold text-lg">Save PIN</Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-white font-semibold text-lg">Save PIN</Text>
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
