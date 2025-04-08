@@ -1,3 +1,6 @@
+// utils.tsx
+import * as SecureStore from "expo-secure-store";
+
 // Constants
 const CURRENCY_LOCALE = "id-ID";
 
@@ -47,4 +50,40 @@ export function formatCurrencyShort(value: number): string {
   if (value >= 1_000_000) return `Rp ${(value / 1_000_000).toFixed(1)}Jt`;
   if (value >= 1_000) return `Rp ${(value / 1_000).toFixed(0)}Ribu`;
   return `Rp ${value}`;
+}
+
+// === SecureStore Helpers ===
+
+/**
+ * Save a value to SecureStore
+ * @param key Storage key
+ * @param value Value to save
+ */
+export async function saveToken(key: string, value: string) {
+  await SecureStore.setItemAsync(key, value);
+}
+
+/**
+ * Retrieve a value from SecureStore
+ * @param key Storage key
+ * @returns Stored value or null
+ */
+export async function getToken(key: string): Promise<string | null> {
+  return await SecureStore.getItemAsync(key);
+}
+
+/**
+ * Delete a value from SecureStore
+ * @param key Storage key
+ */
+export async function deleteToken(key: string) {
+  await SecureStore.deleteItemAsync(key);
+}
+
+/**
+ * Clear all tokens (access & refresh)
+ */
+export async function clearAllTokens() {
+  await SecureStore.deleteItemAsync("accessToken");
+  await SecureStore.deleteItemAsync("refreshToken");
 }
