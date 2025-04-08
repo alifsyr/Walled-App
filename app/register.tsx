@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Link } from "expo-router";
 import {
   Text,
   View,
@@ -10,72 +9,172 @@ import {
   Alert,
   TouchableWithoutFeedback,
   Keyboard,
+  ActivityIndicator,
 } from "react-native";
-import { router } from "expo-router";
-import TermsAndConditions from "@/components/TermsAndConditions"; // Import the new component
+import { router, Link } from "expo-router";
+import TermsAndConditions from "@/components/TermsAndConditions";
+
+const initialErrors = {
+  fullName: "",
+  email: "",
+  password: "",
+  phoneNumber: "",
+};
 
 export default function Register() {
   const [modalVisible, setModalVisible] = useState(false);
   const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
 
-  const handleRegister = () => {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+
+  const [errors, setErrors] = useState(initialErrors);
+  const [loading, setLoading] = useState(false);
+
+  const validate = () => {
+    const newErrors = { ...initialErrors };
+    if (!fullName.trim()) newErrors.fullName = "Full name is required";
+    if (!email.trim()) newErrors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(email))
+      newErrors.email = "Invalid email address";
+    if (!password) newErrors.password = "Password is required";
+    else if (password.length < 6) newErrors.password = "Minimum 6 characters";
+    if (!phoneNumber.trim()) newErrors.phoneNumber = "Phone number is required";
+
+    setErrors(newErrors);
+    return Object.values(newErrors).every((val) => !val);
+  };
+
+  const handleRegister = async () => {
     if (!hasScrolledToEnd) {
-      Alert.alert("Please read the Terms and Conditions before register.");
-    } else {
-      // Proceed with registration logic
-      router.replace("/set-pin");
+      Alert.alert("Please read the Terms and Conditions before registering.");
+      return;
+    }
+
+    if (!validate()) return;
+
+    try {
+      setLoading(true);
+      const response = await fetch("http://localhost:8080/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          fullName,
+          password,
+          phoneNumber,
+          avatarUrl,
+        }),
+      });
+
+      const data = await response.json();
+      setLoading(false);
+
+      if (response.ok) {
+        Alert.alert("Success", data.message);
+        router.replace("/set-pin");
+      } else {
+        if (data.message === "Validation failed" && data.data) {
+          setErrors((prev) => ({ ...prev, ...data.data }));
+        } else {
+          Alert.alert(
+            "Registration Failed",
+            data.message || "Something went wrong",
+          );
+        }
+      }
+    } catch (err) {
+      setLoading(false);
+      Alert.alert(
+        "Network Error",
+        "Unable to register. Please try again later.",
+      );
     }
   };
 
+  const renderInput = (
+    placeholder: string,
+    value: string,
+    setValue: any,
+    key: keyof typeof errors,
+    extraProps = {},
+  ) => (
+    <>
+      <TextInput
+        placeholder={placeholder}
+        placeholderTextColor="black"
+        value={value}
+        onChangeText={setValue}
+        className={`h-12 rounded-lg px-3.5 bg-[#f1f1f1] border ${
+          errors[key] ? "border-red-500 mb-2" : "border-[#f1f1f1] mb-4"
+        }`}
+        {...extraProps}
+      />
+      {errors[key] && (
+        <Text className="text-red-500 mb-2 ml-1">{errors[key]}</Text>
+      )}
+    </>
+  );
+
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View className="flex-1 bg-white justify-center items-center">
-        <View className="flex flex-row items-center mb-40">
+        <View className="flex flex-row items-center mb-10">
           <Image
             source={require("@/assets/images/logo.png")}
             className="w-[50] h-[50] mr-2.5"
           />
           <Text style={styles.title}>Walled</Text>
         </View>
+
         <View className="w-4/5 bg-white rounded-lg">
+          {renderInput("Full Name", fullName, setFullName, "fullName")}
+          {renderInput("Email", email, setEmail, "email", {
+            keyboardType: "email-address",
+            autoCapitalize: "none",
+          })}
+          {renderInput("Password", password, setPassword, "password", {
+            secureTextEntry: true,
+          })}
+          {renderInput(
+            "Phone Number",
+            phoneNumber,
+            setPhoneNumber,
+            "phoneNumber",
+            { keyboardType: "phone-pad" },
+          )}
           <TextInput
-            placeholder="Fullname"
+            placeholder="Avatar Url (optional)"
             placeholderTextColor="black"
-            className="h-12 rounded-lg mb-5 px-3.5 bg-[#f1f1f1]"
-          />
-          <TextInput
-            placeholder="Email"
-            placeholderTextColor="black"
-            className="h-12 rounded-lg mb-5 px-3.5 bg-[#f1f1f1]"
-          />
-          <TextInput
-            placeholder="Password"
-            placeholderTextColor="black"
-            secureTextEntry
-            className="h-12 rounded-lg mb-5 px-3.5 bg-[#f1f1f1]"
-          />
-          <TextInput
-            placeholder="Avatar Url"
-            placeholderTextColor="black"
+            value={avatarUrl}
+            onChangeText={setAvatarUrl}
             className="h-12 rounded-lg mb-5 px-3.5 bg-[#f1f1f1]"
           />
         </View>
-        <View className="w-4/5 mt-5">
-          <TouchableOpacity
-            onPress={() => setModalVisible(true)}
-            className="mt-5"
-          >
-            <Text className="text-blue-500 text-base text-center font-bold">
-              View Terms and Conditions
-            </Text>
-          </TouchableOpacity>
-        </View>
+
+        <TouchableOpacity
+          onPress={() => setModalVisible(true)}
+          className="mt-5"
+        >
+          <Text className="text-blue-500 text-base text-center font-bold">
+            View Terms and Conditions
+          </Text>
+        </TouchableOpacity>
+
         <View className="w-4/5 mt-10">
           <TouchableOpacity
             onPress={handleRegister}
             className="bg-[#007BFF] rounded-lg h-12 justify-center items-center"
+            disabled={loading}
           >
-            <Text className="text-white text-base font-bold">Register</Text>
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text className="text-white text-base font-bold">Register</Text>
+            )}
           </TouchableOpacity>
           <View className="flex flex-row mt-5">
             <Text>Have an account?</Text>
