@@ -11,6 +11,7 @@ import {
   StyleSheet,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
+import { saveToken } from "@/script/utils"; // Assuming you have a utility function to save tokens
 
 export default function Index() {
   const router = useRouter();
@@ -43,19 +44,55 @@ export default function Index() {
     return valid;
   };
 
-  const handleLogin = () => {
-    if (validateForm()) {
-      const loginData = { email, password };
+  const handleLogin = async () => {
+    if (!validateForm()) return;
 
-      if (email === "admin@gmail.com" && password === "*Admin123") {
-        // navigate to home page
-        router.replace("/home");
+    try {
+      const response = await fetch("http://localhost:8080/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const result = await response.json();
+
+      if (result.responseCode === 200) {
+        // Simpan token ke SecureStore
+        await saveToken("accessToken", result.data.accessToken);
+        await saveToken("refreshToken", result.data.refreshToken);
+
+        // Ambil token untuk cek PIN
+        const token = result.data.accessToken;
+
+        const pinResponse = await fetch(
+          "http://localhost:8080/api/users/has-pin",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
+        const pinResult = await pinResponse.json();
+
+        if (pinResult.responseCode === 200) {
+          if (pinResult.data === true) {
+            router.replace("/home");
+          } else {
+            router.replace("/set-pin");
+          }
+        } else {
+          alert("Failed to check PIN status.");
+        }
+      } else {
+        alert(result.message || "Login failed");
       }
-      // Here you would typically send the loginData to your backend
-      console.log("Logging in with data:", loginData);
-      router.replace("/home");
-    } else {
-      router.replace("/home");
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("An error occurred. Please try again.");
     }
   };
 
