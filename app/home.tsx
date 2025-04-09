@@ -15,6 +15,7 @@ import BarChartView from "@/components/chart/BarChartView";
 import ChartSwitcher from "@/components/chart/ChartSwitcher";
 import { useChartData } from "@/hooks/useChartData";
 import { formatCurrency, getToken } from "@/script/utils";
+import api from "@/services/api"; // sesuaikan dengan path api.ts Anda
 
 export default function Home() {
   // === State loading
@@ -60,28 +61,14 @@ export default function Home() {
     try {
       setLoading(true);
 
-      // Ambil token dari SecureStore
-      const token = await getToken("accessToken");
-      if (!token) throw new Error("No Access Token");
+      // 1) Ambil data user dari endpoint /api/users/me
+      const userRes = await api.get("/api/users/me");
+      const userData = userRes.data;
 
-      // 1) Ambil data user dari endpoint me
-      const userRes = await fetch("http://localhost:8080/api/users/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const userData = await userRes.json();
-
-      if (!userRes.ok || userData.responseCode !== 200) {
+      if (userData.responseCode !== 200) {
         throw new Error("Failed to fetch user profile");
       }
 
-      // Contoh respons:
-      // {
-      //   "responseCode": 200,
-      //   "data": {
-      //     "user": { "fullName": "Chelsea", ... },
-      //     "wallet": { "balance": 10000000, "accountNumber": "100899" }
-      //   }
-      // }
       const { fullName } = userData.data.user;
       const { balance, accountNumber, id } = userData.data.wallet || {
         balance: 0,
@@ -95,20 +82,18 @@ export default function Home() {
         walletId: id,
       });
 
-      // 2) Ambil transaksi /api/transactions/me
-      const trxRes = await fetch("http://localhost:8080/api/transactions/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const trxData = await trxRes.json();
+      // 2) Ambil transaksi dari endpoint /api/transactions/me
+      const trxRes = await api.get("/api/transactions/me");
+      const trxData = trxRes.data;
 
-      if (!trxRes.ok || trxData.responseCode !== 200) {
+      if (trxData.responseCode !== 200) {
         throw new Error("Failed to fetch transactions");
       }
+
       setTransactions(trxData.data || []);
     } catch (error) {
       console.warn("fetchUserData error:", error);
-      // Jika token invalid, bisa tambahkan:
-      // router.replace("/");
+      // Jika error karena token invalid, router.replace("/") bisa dipanggil di interceptor api.ts
     } finally {
       setLoading(false);
     }

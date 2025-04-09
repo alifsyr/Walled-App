@@ -11,6 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
+import api from "@/services/api"; // pastikan path sesuai struktur Anda
 
 export default function ConfirmPin() {
   const router = useRouter();
@@ -25,37 +26,55 @@ export default function ConfirmPin() {
   } = useLocalSearchParams();
 
   const [pin, setPin] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleChange = useCallback((text: string) => {
     const digits = text.replace(/\D/g, "");
     if (digits.length <= 6) setPin(digits);
   }, []);
 
-  const handleConfirm = useCallback(() => {
+  const handleConfirm = useCallback(async () => {
     if (pin.length !== 6) {
       Alert.alert("Invalid PIN", "Please enter a 6-digit PIN.");
       return;
     }
 
-    console.log("PIN entered:", pin);
+    try {
+      setLoading(true);
 
-    // Optional: verify PIN with backend here before continuing
+      // Kirim PIN ke backend untuk verifikasi
+      const response = await api.post("/api/users/verify-pin", {
+        pin,
+      });
 
-    router.replace({
-      pathname: "/transaction-status",
-      params: {
-        status: "success",
-        type,
-        trxId,
-        beneficiary,
-        sourceOfFund,
-        amount,
-        notes,
-        time,
-      },
-    });
+      const result = response.data;
+
+      if (result.responseCode === 200 && result.data === true) {
+        router.replace({
+          pathname: "/transaction-status",
+          params: {
+            status: "success",
+            type,
+            trxId,
+            beneficiary,
+            sourceOfFund,
+            amount,
+            notes,
+            time,
+          },
+        });
+      } else {
+        Alert.alert("Verification Failed", "PIN is incorrect.");
+      }
+    } catch (error) {
+      console.error("PIN verification error:", error);
+      Alert.alert("Error", "Failed to verify PIN. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }, [
     pin,
+    router,
     type,
     trxId,
     beneficiary,
@@ -63,7 +82,6 @@ export default function ConfirmPin() {
     amount,
     notes,
     time,
-    router,
   ]);
 
   return (
@@ -102,12 +120,14 @@ export default function ConfirmPin() {
 
           <TouchableOpacity
             onPress={handleConfirm}
-            disabled={pin.length !== 6}
+            disabled={pin.length !== 6 || loading}
             className={`rounded-xl p-4 items-center ${
               pin.length === 6 ? "bg-blue-500" : "bg-gray-300"
             }`}
           >
-            <Text className="text-white font-semibold text-lg">Confirm</Text>
+            <Text className="text-white font-semibold text-lg">
+              {loading ? "Verifying..." : "Confirm"}
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

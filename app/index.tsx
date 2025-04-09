@@ -11,7 +11,8 @@ import {
   StyleSheet,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
-import { saveToken } from "@/script/utils"; // Assuming you have a utility function to save tokens
+import { saveAccessToken, saveRefreshToken } from "@/script/utils";
+import api from "@/services/api"; // axios instance dengan interceptor
 
 export default function Index() {
   const router = useRouter();
@@ -48,35 +49,29 @@ export default function Index() {
     if (!validateForm()) return;
 
     try {
-      const response = await fetch("http://localhost:8080/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      // 1) Login: menggunakan skipAuth agar tidak inject token
+      const response = await api.post(
+        "/auth/login",
+        { email, password },
+        {
+          headers: {
+            skipAuth: true,
+          },
         },
-        body: JSON.stringify({ email, password }),
-      });
+      );
 
-      const result = await response.json();
+      const result = response.data;
 
       if (result.responseCode === 200) {
+        const { accessToken, refreshToken } = result.data;
+
         // Simpan token ke SecureStore
-        await saveToken("accessToken", result.data.accessToken);
-        await saveToken("refreshToken", result.data.refreshToken);
+        await saveAccessToken(accessToken);
+        await saveRefreshToken(refreshToken);
 
-        // Ambil token untuk cek PIN
-        const token = result.data.accessToken;
-
-        const pinResponse = await fetch(
-          "http://localhost:8080/api/users/has-pin",
-          {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
-
-        const pinResult = await pinResponse.json();
+        // 2) Setelah token disimpan, panggil endpoint yang membutuhkan auth
+        const pinResponse = await api.post("/api/users/has-pin");
+        const pinResult = pinResponse.data;
 
         if (pinResult.responseCode === 200) {
           if (pinResult.data === true) {

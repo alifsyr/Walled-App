@@ -12,8 +12,9 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { router, Link } from "expo-router";
-import * as SecureStore from "expo-secure-store";
 import TermsAndConditions from "@/components/TermsAndConditions";
+import api from "@/services/api";
+import { saveAccessToken, saveRefreshToken } from "@/script/utils";
 
 const initialErrors = {
   fullName: "",
@@ -59,26 +60,31 @@ export default function Register() {
 
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:8080/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+
+      const response = await api.post(
+        "/auth/signup",
+        {
           email,
           fullName,
           password,
           phoneNumber,
           avatarUrl,
-        }),
-      });
+        },
+        {
+          headers: {
+            skipAuth: true, // agar tidak menyisipkan Authorization
+          },
+        },
+      );
 
-      const data = await response.json();
+      const data = response.data;
       setLoading(false);
 
-      if (response.ok) {
+      if (data.responseCode === 200) {
         const { accessToken, refreshToken } = data.data;
 
-        await SecureStore.setItemAsync("accessToken", accessToken);
-        await SecureStore.setItemAsync("refreshToken", refreshToken);
+        await saveAccessToken(accessToken);
+        await saveRefreshToken(refreshToken);
 
         router.replace("/set-pin");
       } else {
@@ -91,7 +97,7 @@ export default function Register() {
           );
         }
       }
-    } catch (err) {
+    } catch (err: any) {
       setLoading(false);
       console.error("Registration error:", err);
       Alert.alert(
