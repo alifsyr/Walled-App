@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { router } from "expo-router";
-import * as SecureStore from "expo-secure-store";
+import api from "@/services/api"; // pastikan path sesuai
 
 export default function SetPin() {
   const [pin, setPin] = useState("");
@@ -34,39 +34,14 @@ export default function SetPin() {
     setLoading(true);
 
     try {
-      const accessToken = await SecureStore.getItemAsync("accessToken");
-
-      if (!accessToken) {
-        setLoading(false);
-        Alert.alert(
-          "Unauthorized",
-          "Access token missing. Please log in again.",
-        );
-        return;
-      }
-
       // Step 1: Set the PIN
-      const pinRes = await fetch("http://localhost:8080/auth/set-pin", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ pin }),
-      });
+      const pinRes = await api.post("/auth/set-pin", { pin });
+      const pinData = pinRes.data;
 
-      const pinData = await pinRes.json();
-
-      if (pinRes.status === 200) {
+      if (pinData.responseCode === 200) {
         // Step 2: Try to create a wallet
-        const walletRes = await fetch("http://localhost:8080/api/wallets", {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        });
-
-        const walletData = await walletRes.json();
+        const walletRes = await api.post("/api/wallets");
+        const walletData = walletRes.data;
 
         switch (walletRes.status) {
           case 201:
@@ -94,12 +69,12 @@ export default function SetPin() {
               walletData.message || "Something went wrong.",
             );
         }
-      } else if (pinRes.status === 400) {
+      } else if (pinData.responseCode === 400) {
         Alert.alert(
           "PIN Error",
           pinData.message || "PIN has already been set.",
         );
-      } else if (pinRes.status === 403) {
+      } else if (pinData.responseCode === 403) {
         Alert.alert("Session Expired", "Your session is invalid or expired.");
         router.replace("/");
       } else {
