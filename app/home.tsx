@@ -1,45 +1,144 @@
-import React, { useState } from "react";
-import { View, Text, Image, TouchableOpacity, ScrollView } from "react-native";
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import { router } from "expo-router";
+
 import PieChartView from "@/components/chart/PieChartView";
 import BarChartView from "@/components/chart/BarChartView";
 import ChartSwitcher from "@/components/chart/ChartSwitcher";
 import { useChartData } from "@/hooks/useChartData";
-import { formatCurrency } from "@/script/utils";
-
-export const mockTransactions = [
-  { id: 1, title: "Amazon", amount: -500000, date: "2025-03-30" },
-  { id: 2, title: "Salary", amount: 15000000, date: "2025-03-30" },
-  { id: 3, title: "Gojek", amount: -25000, date: "2025-04-01" },
-  { id: 4, title: "Starbucks", amount: -50000, date: "2025-03-24" },
-  { id: 5, title: "Freelance", amount: 2000000, date: "2025-03-22" },
-  { id: 6, title: "Grab", amount: -100000, date: "2025-02-15" },
-  { id: 7, title: "Bonus", amount: 3000000, date: "2025-02-10" },
-  { id: 8, title: "Netflix", amount: -150000, date: "2025-01-20" },
-  { id: 9, title: "Shopee", amount: -250000, date: "2025-01-15" },
-  { id: 10, title: "Consulting", amount: 4000000, date: "2025-01-10" },
-];
+import { formatCurrency, getToken } from "@/script/utils";
 
 export default function Home() {
-  const user = {
-    name: "Chelsea",
-    balance: 10000000,
-    accountNumber: "100899",
-  };
+  // === State loading
+  const [loading, setLoading] = useState(true);
 
+  // === State tampilan chart
   const [showBalance, setShowBalance] = useState(false);
   const [chartType, setChartType] = useState<"pie" | "bar">("pie");
   const [filter, setFilter] = useState<"weekly" | "monthly" | "quarterly">(
     "monthly",
   );
-  const [transactions] = useState(mockTransactions);
 
+  // === State data user
+  const [user, setUser] = useState<{
+    name: string;
+    balance: number;
+    accountNumber: string;
+    walletId: number;
+  } | null>(null);
+
+  // === State data transaksi
+  const [transactions, setTransactions] = useState<
+    {
+      id: number;
+      transactionType: string;
+      amount: number;
+      recipientWalletId: number | null;
+      transactionDate: string;
+      description: string | null;
+      walletId: number | null;
+    }[]
+  >([]);
+
+  // === Gunakan useChartData untuk chart
   const { barData, income, expense, savingsPercentage } = useChartData(
     transactions,
     filter,
+    user?.walletId ?? 0,
   );
 
+  // === Fungsi fetch data user & transactions
+  const fetchUserData = useCallback(async () => {
+    try {
+      setLoading(true);
+
+      // Ambil token dari SecureStore
+      const token = await getToken("accessToken");
+      if (!token) throw new Error("No Access Token");
+
+      // 1) Ambil data user dari endpoint me
+      const userRes = await fetch("http://localhost:8080/api/users/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const userData = await userRes.json();
+
+      if (!userRes.ok || userData.responseCode !== 200) {
+        throw new Error("Failed to fetch user profile");
+      }
+
+      // Contoh respons:
+      // {
+      //   "responseCode": 200,
+      //   "data": {
+      //     "user": { "fullName": "Chelsea", ... },
+      //     "wallet": { "balance": 10000000, "accountNumber": "100899" }
+      //   }
+      // }
+      const { fullName } = userData.data.user;
+      const { balance, accountNumber, id } = userData.data.wallet || {
+        balance: 0,
+        accountNumber: "00000",
+      };
+
+      setUser({
+        name: fullName,
+        balance,
+        accountNumber,
+        walletId: id,
+      });
+
+      // 2) Ambil transaksi /api/transactions/me
+      const trxRes = await fetch("http://localhost:8080/api/transactions/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const trxData = await trxRes.json();
+
+      if (!trxRes.ok || trxData.responseCode !== 200) {
+        throw new Error("Failed to fetch transactions");
+      }
+      setTransactions(trxData.data || []);
+    } catch (error) {
+      console.warn("fetchUserData error:", error);
+      // Jika token invalid, bisa tambahkan:
+      // router.replace("/");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // === load data sekali di mount
+  useEffect(() => {
+    fetchUserData();
+  }, [fetchUserData]);
+
+  // === Jika masih loading
+  if (loading) {
+    return (
+      <View className="flex-1 bg-white justify-center items-center">
+        <ActivityIndicator size="large" color="#007BFF" />
+        <Text className="mt-3 text-gray-500">Loading data...</Text>
+      </View>
+    );
+  }
+
+  // === Jika user null -> failed
+  if (!user) {
+    return (
+      <View className="flex-1 bg-white justify-center items-center">
+        <Text className="text-red-500">Failed to load user data.</Text>
+      </View>
+    );
+  }
+
+  // === Render UI utama
   return (
     <ScrollView
       className="flex-1 bg-[#FAFBFD]"
@@ -137,8 +236,37 @@ export default function Home() {
 
         <ScrollView showsVerticalScrollIndicator={false}>
           {transactions.map((item) => {
-            const isExpense = item.amount < 0;
+            // Asumsikan kamu sudah tahu userWalletId
+            // misalnya userWalletId = 4 (dari user.me)
+            const userWalletId = user.walletId; // misalnya
+
+            // Cek apakah ini expense (keluar)
+            // => recipientWalletId != userWalletId berarti uang keluar
+            const isExpense =
+              item.recipientWalletId !== null &&
+              item.recipientWalletId !== userWalletId;
+
+            // Warna nominal
             const textColor = isExpense ? "text-red-500" : "text-green-500";
+
+            // Tanda plus/minus
+            const sign = isExpense ? "-" : "";
+
+            // Ubahan transactionType
+            let displayType = item.transactionType;
+            if (item.transactionType === "TOP_UP") {
+              displayType = "Top Up";
+            } else if (item.transactionType === "TRANSFER") {
+              displayType = "Transfer";
+            }
+
+            // Pakai `item.description` jika ada, atau fallback ke displayType
+            const title = item.description ?? displayType;
+
+            // Format tanggal
+            const dateStr = new Date(item.transactionDate).toLocaleString(
+              "id-ID",
+            );
 
             return (
               <View
@@ -147,13 +275,15 @@ export default function Home() {
               >
                 <View className="flex-row justify-between items-center">
                   <Text className="text-black text-lg font-semibold">
-                    {item.title}
+                    {title}
                   </Text>
+
                   <Text className={`${textColor} text-lg font-bold`}>
+                    {sign}
                     {formatCurrency(item.amount)}
                   </Text>
                 </View>
-                <Text className="text-gray-500 text-sm mt-1">{item.date}</Text>
+                <Text className="text-gray-500 text-sm mt-1">{dateStr}</Text>
               </View>
             );
           })}
