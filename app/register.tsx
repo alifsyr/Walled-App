@@ -79,8 +79,8 @@ export default function Register() {
 
       const data = response.data;
       setLoading(false);
-
-      if (data.responseCode === 200) {
+      console.log("Registration response:", data);
+      if (data.responseCode === 201) {
         const { accessToken, refreshToken } = data.data;
 
         await saveAccessToken(accessToken);

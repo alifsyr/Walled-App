@@ -1,6 +1,5 @@
 import React, { useState, useCallback } from "react";
 import {
-  Alert,
   Keyboard,
   Text,
   TextInput,
@@ -8,19 +7,17 @@ import {
   TouchableWithoutFeedback,
   View,
 } from "react-native";
-
 import { router } from "expo-router";
-
 import InlineDropdown from "@/components/InlineDropdown";
 import { generateTransactionId, formatCurrency } from "@/script/utils";
 
-// Constants
 const MAX_NOTE_LENGTH = 100;
 
 export default function Topup() {
   const [sourceOfFund, setSourceOfFund] = useState<string | undefined>();
   const [formattedAmount, setFormattedAmount] = useState("");
   const [notes, setNotes] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleAmountChange = useCallback((text: string) => {
     const digitsOnly = text.replace(/\D/g, "");
@@ -37,7 +34,7 @@ export default function Topup() {
     setNotes(text.slice(0, MAX_NOTE_LENGTH));
   }, []);
 
-  const isTopupDisabled = !sourceOfFund || !formattedAmount;
+  const isTopupDisabled = !sourceOfFund || !formattedAmount || loading;
 
   const handleTopup = useCallback(() => {
     if (isTopupDisabled) return;
@@ -56,7 +53,7 @@ export default function Topup() {
       hour12: false,
     });
 
-    // Navigate to PIN confirmation screen
+    // Simpan metadata dan navigasi ke input-pin
     router.push({
       pathname: "/input-pin",
       params: {
@@ -65,14 +62,10 @@ export default function Topup() {
         amount: numericAmount,
         notes: trimmedNotes,
         time: timestamp,
-        sourceOfFund: sourceOfFund,
+        sourceOfFund,
       },
     });
   }, [formattedAmount, sourceOfFund, notes, isTopupDisabled]);
-
-  console.log("sourceOfFund:", sourceOfFund);
-  console.log("formattedAmount:", formattedAmount);
-  console.log("Notes:", notes);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -130,7 +123,9 @@ export default function Topup() {
               isTopupDisabled ? "bg-gray-400" : "bg-[#0061FF]"
             }`}
           >
-            <Text className="text-white font-bold text-lg">Top Up</Text>
+            <Text className="text-white font-bold text-lg">
+              {loading ? "Loading..." : "Continue"}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>

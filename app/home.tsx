@@ -133,7 +133,7 @@ export default function Home() {
       <View className="flex-row">
         <View className="flex-col mt-5">
           <Text className="text-2xl font-bold">
-            Good Morning, {user.name.split(" ", 1)}
+            Welcome, {user.name.split(" ", 1)}
           </Text>
           <Text className="text-gray-500 w-[250px] mt-3 text-lg">
             Check all your incoming and outgoing transactions here
