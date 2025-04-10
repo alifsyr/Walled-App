@@ -6,30 +6,56 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   View,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
-
 import InlineDropdown from "@/components/InlineDropdown";
 import { generateTransactionId, formatCurrency } from "@/script/utils";
+import api from "@/services/api";
 
-// Constants
 const MAX_NOTE_LENGTH = 100;
-const BENEFICIARY_LIST = ["234789", "123456", "456789"];
 
 export default function Transfer() {
+  const [beneficiaryList, setBeneficiaryList] = useState<
+    { label: string; value: string }[]
+  >([]);
   const [beneficiary, setBeneficiary] = useState<string>();
   const [formattedAmount, setFormattedAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [accountBalance, setAccountBalance] = useState<number>(0);
 
-  // Simulate fetching account balance from an API
   useEffect(() => {
-    const fetchBalance = async () => {
-      // Replace with real API call later
-      const mockBalance = 8000000;
-      setAccountBalance(mockBalance);
+    const fetchUsers = async () => {
+      try {
+        const res = await api.get("/api/users");
+        const users = res.data.data || [];
+        const formatted = users
+          .filter((item: any) => item.wallet?.accountNumber)
+          .map((item: any) => {
+            const account = item.wallet.accountNumber;
+            const name = item.user.fullName.split(" ")[0];
+            const walletId = item.wallet.id;
+            return { label: `${account} - ${name}`, value: walletId };
+          });
+        setBeneficiaryList(formatted);
+      } catch (err) {
+        console.error("Error fetching users:", err);
+        Alert.alert("Error", "Failed to fetch users.");
+      }
     };
 
+    const fetchBalance = async () => {
+      try {
+        const res = await api.get("/api/wallets/balance");
+        const balance = res.data.data?.balance || 0;
+        setAccountBalance(balance);
+      } catch (err) {
+        console.error("Error fetching balance:", err);
+        Alert.alert("Error", "Failed to fetch balance.");
+      }
+    };
+
+    fetchUsers();
     fetchBalance();
   }, []);
 
@@ -39,7 +65,6 @@ export default function Transfer() {
       setFormattedAmount("");
       return;
     }
-
     const numberValue = Number(digitsOnly);
     setFormattedAmount(formatCurrency(numberValue));
   }, []);
@@ -54,6 +79,15 @@ export default function Transfer() {
     if (isTransferDisabled) return;
 
     const numericAmount = Number(formattedAmount.replace(/\./g, ""));
+    if (numericAmount <= 0) {
+      Alert.alert("Invalid Amount", "Amount must be greater than 0.");
+      return;
+    }
+    if (numericAmount > accountBalance) {
+      Alert.alert("Insufficient Balance", "You do not have enough balance.");
+      return;
+    }
+
     const trimmedNotes = notes.trim() || "-";
     const trxType = "Transfer";
     const trxId = generateTransactionId(trxType);
@@ -67,7 +101,6 @@ export default function Transfer() {
       hour12: false,
     });
 
-    // Navigate to PIN confirmation screen
     router.push({
       pathname: "/input-pin",
       params: {
@@ -79,13 +112,12 @@ export default function Transfer() {
         time: timestamp,
       },
     });
-  }, [beneficiary, formattedAmount, notes, isTransferDisabled]);
+  }, [beneficiary, formattedAmount, notes, isTransferDisabled, accountBalance]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View className="flex-1 bg-[#FAFBFD] p-4">
         <View className="flex items-center gap-4 pb-20">
-          {/* Beneficiary Dropdown */}
           <View className="p-2 w-full max-w-md rounded-2xl bg-[#0061FF]">
             <InlineDropdown
               label="To"
@@ -94,13 +126,12 @@ export default function Transfer() {
               containerSize="90%"
               fontSize={20}
               fontColor="#fff"
-              data={BENEFICIARY_LIST}
+              data={beneficiaryList}
               onSelect={(value) => setBeneficiary(value || "")}
-              placeholder="Beneficiary List"
+              placeholder="Beneficiary Account Number"
             />
           </View>
 
-          {/* Amount */}
           <View className="flex-row items-center justify-between p-4 w-full max-w-md rounded-2xl bg-white">
             <View className="flex-1">
               <Text className="text-gray-500 text-sm mb-2">Amount</Text>
@@ -120,7 +151,6 @@ export default function Transfer() {
             </View>
           </View>
 
-          {/* Notes */}
           <View className="flex-row items-center justify-between p-4 w-full max-w-md rounded-2xl bg-white">
             <View className="flex-1">
               <Text className="text-gray-500 text-sm mb-2">Notes</Text>
@@ -137,7 +167,6 @@ export default function Transfer() {
           </View>
         </View>
 
-        {/* Transfer Button */}
         <View className="absolute bottom-10 left-4 right-4 items-center">
           <TouchableOpacity
             onPress={handleTransfer}

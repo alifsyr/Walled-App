@@ -3,8 +3,13 @@ import { View, ViewStyle, TextStyle, Text, DimensionValue } from "react-native";
 import DropDownPicker from "react-native-dropdown-picker";
 import { Feather } from "@expo/vector-icons";
 
+interface InlineDropdownItem {
+  label: string;
+  value: string;
+}
+
 interface InlineDropdownProps {
-  data: string[];
+  data: (string | InlineDropdownItem)[];
   onSelect: (selectedValue: string | null) => void;
   placeholder?: string;
   fontSize?: number;
@@ -20,7 +25,7 @@ const InlineDropdown: React.FC<InlineDropdownProps> = ({
   onSelect,
   placeholder = "Select an option",
   fontSize = 16,
-  fontColor = "#111", // fallback to black
+  fontColor = "#111",
   containerColor = "#fff",
   containerStyle,
   containerSize = "100%",
@@ -28,12 +33,13 @@ const InlineDropdown: React.FC<InlineDropdownProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState<string | null>(null);
-  const [items, setItems] = useState(
-    data.map((item) => ({ label: item, value: item })),
-  );
+  const [items, setItems] = useState<InlineDropdownItem[]>([]);
 
   useEffect(() => {
-    setItems(data.map((item) => ({ label: item, value: item })));
+    const mapped = data.map((item) =>
+      typeof item === "string" ? { label: item, value: item } : item,
+    );
+    setItems(mapped);
   }, [data]);
 
   const handleChangeValue = useCallback(
@@ -59,10 +65,7 @@ const InlineDropdown: React.FC<InlineDropdownProps> = ({
       {label && (
         <Text
           className="font-semibold ml-3 mb-1"
-          style={{
-            fontSize,
-            color: fontColor,
-          }}
+          style={{ fontSize, color: fontColor }}
         >
           {label}:
         </Text>

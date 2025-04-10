@@ -55,15 +55,30 @@ export default function ConfirmPin() {
         return;
       }
 
-      // 2. Submit transaksi top up
-      const topupRes = await api.post("/api/transactions/top-up", {
-        amount: Number(amount),
-        description: notes,
-      });
-      const topupResult = topupRes.data;
+      // 2. Submit transaksi sesuai tipe
+      let transactionResult;
+      if (type === "Top Up") {
+        const res = await api.post("/api/transactions/top-up", {
+          amount: Number(amount),
+          description: notes,
+        });
+        transactionResult = res.data;
+      } else if (type === "Transfer") {
+        console.log("beneficiary", beneficiary);
+        console.log("amount", amount);
+        const res = await api.post("/api/transactions/transfer", {
+          recipientWalletId: Number(beneficiary),
+          amount: Number(amount),
+          description: notes,
+        });
+        transactionResult = res.data;
+      } else {
+        console.log("error type", type);
+        throw new Error("Unsupported transaction type");
+      }
 
-      if (topupResult.responseCode === 200) {
-        // 3. Redirect ke halaman status dengan status sukses
+      // 3. Redirect ke halaman status
+      if (transactionResult.responseCode === 200) {
         router.replace({
           pathname: "/transaction-status",
           params: {
@@ -79,8 +94,8 @@ export default function ConfirmPin() {
         });
       } else {
         Alert.alert(
-          "Top Up Failed",
-          topupResult.message || "Something went wrong.",
+          "Transaction Failed",
+          transactionResult.message || "Something went wrong.",
         );
       }
     } catch (error) {
