@@ -147,7 +147,7 @@ export default function Home() {
         </View>
         <View className="p-2 mt-5">
           <Image
-            source={require("@/assets/images/sun.png")}
+            source={require("@/assets/images/logo.png")}
             className="w-[81px] h-[77px]"
           />
         </View>

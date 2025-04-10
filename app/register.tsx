@@ -25,7 +25,7 @@ const initialErrors = {
 
 export default function Register() {
   const [modalVisible, setModalVisible] = useState(false);
-  const [hasScrolledToEnd, setHasScrolledToEnd] = useState(false);
+  const [agreed, setAgreed] = useState(false); // updated state
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -51,8 +51,10 @@ export default function Register() {
   };
 
   const handleRegister = async () => {
-    if (!hasScrolledToEnd) {
-      Alert.alert("Please read the Terms and Conditions before registering.");
+    if (!agreed) {
+      Alert.alert(
+        "Please agree to the Terms and Conditions before continuing.",
+      );
       return;
     }
 
@@ -72,20 +74,18 @@ export default function Register() {
         },
         {
           headers: {
-            skipAuth: true, // agar tidak menyisipkan Authorization
+            skipAuth: true,
           },
         },
       );
 
       const data = response.data;
       setLoading(false);
-      console.log("Registration response:", data);
+
       if (data.responseCode === 201) {
         const { accessToken, refreshToken } = data.data;
-
         await saveAccessToken(accessToken);
         await saveRefreshToken(refreshToken);
-
         router.replace("/set-pin");
       } else {
         if (data.message === "Validation failed" && data.data) {
@@ -199,9 +199,8 @@ export default function Register() {
         <TermsAndConditions
           visible={modalVisible}
           onClose={() => setModalVisible(false)}
-          onScrollEnd={() => setHasScrolledToEnd(true)}
-          hasScrolledToEnd={hasScrolledToEnd}
-          setHasScrolledToEnd={setHasScrolledToEnd}
+          agreed={agreed}
+          setAgreed={setAgreed}
         />
       </View>
     </TouchableWithoutFeedback>
