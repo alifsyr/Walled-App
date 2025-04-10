@@ -23,6 +23,7 @@ export default function ConfirmPin() {
     amount = "",
     notes = "-",
     time = "",
+    isSedekah = "",
   } = useLocalSearchParams();
 
   const [pin, setPin] = useState("");
@@ -66,12 +67,22 @@ export default function ConfirmPin() {
       } else if (type === "Transfer") {
         console.log("beneficiary", beneficiary);
         console.log("amount", amount);
-        const res = await api.post("/api/transactions/transfer", {
-          recipientWalletId: Number(beneficiary),
-          amount: Number(amount),
-          description: notes,
-        });
-        transactionResult = res.data;
+        if (isSedekah === "true") {
+          const res = await api.post("/api/transactions/transfer", {
+            recipientWalletId: 0,
+            amount: Number(amount),
+            description: notes,
+            isSedekah: true,
+          });
+          transactionResult = res.data;
+        } else {
+          const res = await api.post("/api/transactions/transfer", {
+            recipientWalletId: Number(beneficiary),
+            amount: Number(amount),
+            description: notes,
+          });
+          transactionResult = res.data;
+        }
       } else {
         console.log("error type", type);
         throw new Error("Unsupported transaction type");
@@ -114,6 +125,7 @@ export default function ConfirmPin() {
     beneficiary,
     sourceOfFund,
     time,
+    isSedekah,
   ]);
 
   return (

@@ -228,8 +228,9 @@ export default function Home() {
             // Cek apakah ini expense (keluar)
             // => recipientWalletId != userWalletId berarti uang keluar
             const isExpense =
-              item.recipientWalletId !== null &&
-              item.recipientWalletId !== userWalletId;
+              (item.recipientWalletId !== null &&
+                item.recipientWalletId !== userWalletId) ||
+              item.description === "Sedekah";
 
             // Warna nominal
             const textColor = isExpense ? "text-red-500" : "text-green-500";

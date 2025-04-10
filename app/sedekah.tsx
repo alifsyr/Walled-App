@@ -1,13 +1,14 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
+  Alert,
 } from "react-native";
 import { router } from "expo-router";
-
+import api from "@/services/api";
 import { formatCurrency, generateTransactionId } from "@/script/utils";
 
 const DONATION_AMOUNTS = [
@@ -17,11 +18,36 @@ const DEFAULT_SOURCE = "walled";
 
 export default function Sedekah() {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [balance, setBalance] = useState<number>(0);
+
+  // Fetch user balance on mount
+  useEffect(() => {
+    const fetchBalance = async () => {
+      try {
+        const res = await api.get("/api/wallets/balance");
+        if (res.data?.responseCode === 200) {
+          setBalance(res.data.data.balance);
+        }
+      } catch (err) {
+        console.warn("Failed to fetch balance", err);
+      }
+    };
+
+    fetchBalance();
+  }, []);
 
   const handleConfirm = useCallback(() => {
     if (!selectedAmount) return;
 
-    const trxId = generateTransactionId("Sedekah");
+    if (selectedAmount > balance) {
+      Alert.alert(
+        "Insufficient Balance",
+        "Donation amount exceeds your available balance.",
+      );
+      return;
+    }
+
+    const trxId = generateTransactionId("Transfer");
     const timestamp = new Date().toLocaleString("id-ID", {
       day: "2-digit",
       month: "short",
@@ -36,13 +62,15 @@ export default function Sedekah() {
       pathname: "/input-pin",
       params: {
         trxId,
-        type: "Sedekah",
+        type: "Transfer",
         amount: selectedAmount,
-        source: DEFAULT_SOURCE,
+        notes: "Sedekah",
+        sourceOfFund: DEFAULT_SOURCE,
         time: timestamp,
+        isSedekah: "true",
       },
     });
-  }, [selectedAmount]);
+  }, [selectedAmount, balance]);
 
   const renderDonationButton = useCallback(
     (amount: number) => {
@@ -71,6 +99,10 @@ export default function Sedekah() {
       <View className="flex-1 bg-[#FAFBFD] p-6 items-center justify-center">
         <Text className="text-xl font-bold text-center mb-4">
           Share your blessings today! ❤️
+        </Text>
+
+        <Text className="text-sm text-gray-500 mb-2">
+          Available Balance: Rp {formatCurrency(balance)}
         </Text>
 
         <View className="w-full max-w-md bg-white rounded-2xl p-4 mb-6">
