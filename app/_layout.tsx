@@ -73,11 +73,19 @@ export default function RootLayout() {
       >
         <Stack.Screen name="index" />
         <Stack.Screen name="register" />
-        <Stack.Screen name="set-pin" />
+        <Stack.Screen
+          name="set-pin"
+          options={{
+            gestureEnabled: false, // 👈 disables iOS swipe back gesture
+            headerShown: true,
+            title: "Your Screen",
+          }}
+        />
 
         <Stack.Screen
           name="home"
           options={{
+            gestureEnabled: false,
             headerShown: true,
             headerTitle: "",
             headerLeft: () =>
@@ -107,6 +115,7 @@ export default function RootLayout() {
         <Stack.Screen
           name="transfer"
           options={{
+            gestureEnabled: false,
             headerShown: true,
             headerTitle: "",
             headerLeft: () => (
@@ -123,6 +132,7 @@ export default function RootLayout() {
         <Stack.Screen
           name="topup"
           options={{
+            gestureEnabled: false,
             headerShown: true,
             headerTitle: "",
             headerLeft: () => (
@@ -138,11 +148,17 @@ export default function RootLayout() {
 
         <Stack.Screen
           name="transaction-status"
-          options={{ headerShown: false }}
+          options={{ headerShown: false, gestureEnabled: false }}
         />
         <Stack.Screen name="input-pin" options={{ headerShown: false }} />
-        <Stack.Screen name="sedekah" options={{ headerShown: false }} />
-        <Stack.Screen name="login" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="sedekah"
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
+        <Stack.Screen
+          name="login"
+          options={{ headerShown: false, gestureEnabled: false }}
+        />
       </Stack>
     </PaperProvider>
   );

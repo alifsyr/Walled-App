@@ -7,7 +7,7 @@ export interface Transaction {
   recipientWalletId: number | null;
   transactionDate: string;
   description: string | null;
-  walletId: number | null; // jadikan optional
+  walletId: number | null;
 }
 
 interface ChartData {
@@ -18,16 +18,6 @@ interface ChartData {
   savingsPercentage: number;
 }
 
-/**
- *
- * @param transactions - List of transactions
- * @param mode - 'weekly', 'monthly', or 'quarterly'
- * @param currentUserWalletId - the wallet ID of the current user
- *
- * Logic expense / income:
- * - expense = recipientWalletId != currentUserWalletId
- * - income = recipientWalletId == currentUserWalletId
- */
 export const useChartData = (
   transactions: Transaction[],
   mode: "weekly" | "monthly" | "quarterly",
@@ -36,9 +26,6 @@ export const useChartData = (
   return useMemo(() => {
     const now = new Date();
 
-    /**
-     * Dapatkan awal periode untuk Pie Chart
-     */
     const pieStartDate = (() => {
       const date = new Date();
       if (mode === "weekly") {
@@ -46,58 +33,48 @@ export const useChartData = (
       } else if (mode === "monthly") {
         date.setMonth(date.getMonth() - 1);
       } else {
-        // quarterly
         date.setMonth(date.getMonth() - 3);
       }
       return date;
     })();
 
-    // Filter transactions untuk Pie Chart
     const pieFiltered = transactions.filter((t) => {
       const date = new Date(t.transactionDate);
       return date >= pieStartDate && date <= now;
     });
 
-    // Income = recipientWalletId == currentUserWalletId || recepientWalletId == null
     const income = pieFiltered
       .filter(
         (t) =>
-          t.recipientWalletId === currentUserWalletId ||
-          t.recipientWalletId === null,
+          (t.recipientWalletId === currentUserWalletId ||
+            t.recipientWalletId === null) &&
+          t.description !== "Sedekah",
       )
       .reduce((acc, curr) => acc + curr.amount, 0);
 
-    // Expense = recipientWalletId != currentUserWalletId || recepientWalletId != null
     const expense = pieFiltered
       .filter(
         (t) =>
-          t.recipientWalletId !== null &&
-          t.recipientWalletId !== currentUserWalletId,
+          t.recipientWalletId !== currentUserWalletId ||
+          t.description === "Sedekah",
       )
       .reduce((acc, curr) => acc + curr.amount, 0);
 
-    // Pie Chart menampilkan total income & expense
     const pieData = [
       { x: "Income", y: income, color: "#2f855a" },
       { x: "Expense", y: expense, color: "#c05621" },
     ];
 
-    // ------------------------
-    // BAR CHART LABELS & GROUP
-    // ------------------------
     const barLabels: string[] = [];
     const groupedMap = new Map<string, { income: number; expense: number }>();
 
     if (mode === "weekly") {
-      // Buat label Week 1..6
       for (let i = 5; i >= 0; i--) {
         const label = `Week ${6 - i}`;
         barLabels.push(label);
         groupedMap.set(label, { income: 0, expense: 0 });
       }
     } else {
-      // monthly => 6 label
-      // quarterly => 3 label
       const count = mode === "monthly" ? 6 : 3;
       for (let i = count - 1; i >= 0; i--) {
         const d = new Date(now);
@@ -111,7 +88,6 @@ export const useChartData = (
       }
     }
 
-    // Batas waktu bar
     const barStartDate = (() => {
       const d = new Date();
       if (mode === "weekly") {
@@ -124,7 +100,6 @@ export const useChartData = (
       return d;
     })();
 
-    // Filter transaction sesuai bar timeframe
     const barFiltered = transactions.filter((t) => {
       const date = new Date(t.transactionDate);
       return date >= barStartDate && date <= now;
@@ -135,11 +110,9 @@ export const useChartData = (
       let label = "";
 
       if (mode === "weekly") {
-        // Hitung jarak
         const diffDays = Math.floor(
           (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
         );
-        // total 42 hari => 6 minggu
         const weekIndex = Math.floor((6 * 7 - diffDays - 1) / 7);
         if (weekIndex >= 0 && weekIndex < 6) {
           label = `Week ${weekIndex + 1}`;
@@ -153,26 +126,23 @@ export const useChartData = (
 
       const group = groupedMap.get(label);
       if (group) {
-        // Income
         if (
-          t.recipientWalletId === currentUserWalletId ||
-          t.recipientWalletId === null
+          (t.recipientWalletId === currentUserWalletId ||
+            t.recipientWalletId === null) &&
+          t.description !== "Sedekah"
         ) {
           group.income += t.amount;
         } else {
-          // Expense
           group.expense += t.amount;
         }
       }
     });
 
-    // Konversi groupedMap ke array
     const barData = barLabels.map((label) => ({
       label,
       ...groupedMap.get(label)!,
     }));
 
-    // Hitung total income/expense
     const totalIncome = barData.reduce((acc, cur) => acc + cur.income, 0);
     const totalExpense = barData.reduce((acc, cur) => acc + cur.expense, 0);
 
