@@ -65,6 +65,12 @@ export default function Home() {
       const userRes = await api.get("/api/users/me");
       const userData = userRes.data;
 
+      console.log("home");
+      if (userRes.status === 404) {
+        router.replace("/set-pin");
+        return;
+      }
+
       if (userData.responseCode !== 200) {
         throw new Error("Failed to fetch user profile");
       }

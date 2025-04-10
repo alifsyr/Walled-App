@@ -21,7 +21,9 @@ export default function Login() {
   useEffect(() => {
     const checkSession = async () => {
       const token = await getAccessToken();
+
       if (token) {
+        console.log("Token found, redirecting to home...");
         router.replace("/home");
       }
     };

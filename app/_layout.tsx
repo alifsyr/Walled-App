@@ -21,6 +21,7 @@ export default function RootLayout() {
     const fetchUser = async () => {
       try {
         const res = await api.get("/api/users/me");
+        console.log("layout");
         const data = res.data.data;
 
         const profileImage =

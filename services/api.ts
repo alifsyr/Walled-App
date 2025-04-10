@@ -65,6 +65,11 @@ api.interceptors.request.use(
     const shouldSkipAuth =
       config.headers?.skipAuth === "true" || config.headers?.skipAuth === true;
 
+    // ✅ LOG endpoint & method
+    console.log(
+      `[REQUEST] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`,
+    );
+
     if (shouldSkipAuth) {
       if (config.headers instanceof AxiosHeaders) {
         config.headers.delete("skipAuth");
@@ -84,7 +89,10 @@ api.interceptors.request.use(
 
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => {
+    console.log("[REQUEST ERROR]", error);
+    return Promise.reject(error);
+  },
 );
 
 api.interceptors.response.use(
@@ -99,6 +107,7 @@ api.interceptors.response.use(
     }
 
     const statusCode = error.response.status;
+    console.log("error", error);
     console.log("statusCode", statusCode);
 
     // 👉 Untuk error selain 403, tampilkan alert
