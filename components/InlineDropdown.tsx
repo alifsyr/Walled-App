@@ -25,7 +25,7 @@ const InlineDropdown: React.FC<InlineDropdownProps> = ({
   onSelect,
   placeholder = "Select an option",
   fontSize = 16,
-  fontColor = "#111",
+  fontColor = "#000",
   containerColor = "#fff",
   containerStyle,
   containerSize = "100%",

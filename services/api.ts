@@ -11,7 +11,6 @@ import {
   saveRefreshToken,
   clearAllTokens,
 } from "@/script/utils";
-import { Alert } from "react-native";
 
 interface RefreshResponse {
   responseCode: number;
@@ -100,6 +99,7 @@ api.interceptors.response.use(
     }
 
     const statusCode = error.response.status;
+    console.log("statusCode", statusCode);
 
     // 👉 Untuk error selain 403, tampilkan alert
     if ([400, 401, 404].includes(statusCode)) {

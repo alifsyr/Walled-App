@@ -118,14 +118,14 @@ export default function Transfer() {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
       <View className="flex-1 bg-[#FAFBFD] p-4">
         <View className="flex items-center gap-4 pb-20">
-          <View className="p-2 w-full max-w-md rounded-2xl bg-[#0061FF]">
+          <View className="p-2 w-full max-w-md rounded-2xl bg-gray-200">
             <InlineDropdown
               label="To"
-              containerColor="#0061FF"
+              containerColor="#e5e7eb"
               containerStyle={{ flexDirection: "row" }}
               containerSize="90%"
-              fontSize={20}
-              fontColor="#fff"
+              fontSize={16}
+              fontColor="#000"
               data={beneficiaryList}
               onSelect={(value) => setBeneficiary(value || "")}
               placeholder="Beneficiary Account Number"

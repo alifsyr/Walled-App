@@ -1,4 +1,3 @@
-// app/TermsAndConditions.tsx
 import React, { useRef } from "react";
 import {
   Modal,
@@ -7,8 +6,11 @@ import {
   TouchableOpacity,
   View,
   Alert,
+  Platform,
+  useWindowDimensions,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 
 interface TermsAndConditionsProps {
   visible: boolean;
@@ -26,13 +28,13 @@ const TermsAndConditions: React.FC<TermsAndConditionsProps> = ({
   setHasScrolledToEnd,
 }) => {
   const scrollViewRef = useRef<ScrollView>(null);
+  const { height } = useWindowDimensions();
 
   const handleScroll = (event: any) => {
     const contentHeight = event.nativeEvent.contentSize.height;
     const scrollHeight = event.nativeEvent.layoutMeasurement.height;
     const scrollPosition = event.nativeEvent.contentOffset.y;
 
-    // Check if the user has scrolled to the end
     if (scrollPosition + scrollHeight >= contentHeight) {
       setHasScrolledToEnd(true);
       onScrollEnd();
@@ -43,73 +45,81 @@ const TermsAndConditions: React.FC<TermsAndConditionsProps> = ({
     if (!hasScrolledToEnd) {
       Alert.alert("Please read the Terms and Conditions before agreeing.");
     } else {
-      // Logic to toggle checkbox state can be added here if needed
-      Alert.alert("You have agreed to the Terms and Conditions.");
+      Alert.alert("Thank you!", "You have agreed to the Terms.");
     }
   };
 
   return (
     <Modal
-      animationType="slide"
-      transparent={true}
+      animationType="fade"
+      transparent
       visible={visible}
       onRequestClose={onClose}
     >
-      <View className="flex-1 justify-center items-center bg-black bg-opacity-70">
-        <View className="w-4/5 max-h-[80%] bg-white rounded-lg p-5">
-          <Text className="text-lg font-bold mb-3">Terms and Conditions</Text>
+      <BlurView
+        intensity={60}
+        tint={Platform.OS === "ios" ? "light" : "default"}
+        className="flex-1 items-center justify-center px-4"
+      >
+        <View
+          className="w-full max-w-md bg-white  rounded-2xl px-5 py-6 p-6 shadow-lg"
+          style={{ maxHeight: height * 0.5 }}
+        >
+          <Text className="text-xl font-bold mb-4 text-center">
+            Terms and Conditions
+          </Text>
+
           <ScrollView
             ref={scrollViewRef}
             onScroll={handleScroll}
-            scrollEventThrottle={16} // Adjust for smoother scrolling
+            scrollEventThrottle={16}
+            className="mb-4 h-[60%]"
+            showsVerticalScrollIndicator={false}
           >
-            <Text className="text-gray-500 mb-5 text-lg">
-              By using this application, you agree to the following terms and
-              conditions:
+            <Text className="text-gray-700 text-base leading-relaxed">
+              By using this application, you agree to the following terms:
               {"\n\n"}
-              1. <Text className="font-bold">Acceptance of Terms</Text>: By
+              <Text className="font-bold">1. Acceptance of Terms:</Text> By
               accessing and using this application, you accept and agree to be
-              bound by these terms and conditions.
+              bound by these terms.
               {"\n\n"}
-              2. <Text className="font-bold">User Responsibilities</Text>: You
-              are responsible for maintaining the confidentiality of your
-              account and password and for restricting access to your computer.
+              <Text className="font-bold">2. User Responsibilities:</Text> You
+              are responsible for keeping your account and password secure.
               {"\n\n"}
-              3. <Text className="font-bold">Data Privacy</Text>: We respect
-              your privacy and are committed to protecting your personal
-              information. Please refer to our Privacy Policy for more details.
+              <Text className="font-bold">3. Data Privacy:</Text> We are
+              committed to protecting your personal data. Please read our
+              Privacy Policy.
               {"\n\n"}
-              4. <Text className="font-bold">Limitation of Liability</Text>: We
-              will not be liable for any damages arising from the use of this
-              application.
+              <Text className="font-bold">4. Limitation of Liability:</Text> We
+              are not liable for any damages from the use of this application.
               {"\n\n"}
-              5. <Text className="font-bold">Changes to Terms</Text>: We may
-              update these terms from time to time. Your continued use of the
-              application after any changes constitutes your acceptance of the
-              new terms.
+              <Text className="font-bold">5. Changes to Terms:</Text> Terms may
+              change over time. Continued use indicates your agreement.
             </Text>
           </ScrollView>
+
           <TouchableOpacity
             onPress={handleCheckboxPress}
-            className="flex flex-row items-center mt-3"
+            className="flex-row items-center mb-4"
           >
             <FontAwesome
               name={hasScrolledToEnd ? "check-square" : "square-o"}
               size={20}
-              color={hasScrolledToEnd ? "blue" : "gray"}
+              color={hasScrolledToEnd ? "#0061FF" : "#9CA3AF"}
             />
-            <Text className="ml-2 text-gray-500 text-sm">
-              I have read and agree to the Terms and Conditions *
+            <Text className="ml-2 text-sm text-gray-600">
+              I have read and agree to the Terms *
             </Text>
           </TouchableOpacity>
+
           <TouchableOpacity
             onPress={onClose}
-            className="bg-blue-600 rounded-lg h-10 justify-center items-center mt-5"
+            className="bg-blue-600 rounded-xl py-3 items-center"
           >
-            <Text className="text-white">Close</Text>
+            <Text className="text-black font-semibold text-base">Close</Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </BlurView>
     </Modal>
   );
 };

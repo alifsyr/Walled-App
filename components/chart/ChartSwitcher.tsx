@@ -48,7 +48,12 @@ export default function ChartSwitcher({
             onPress={toggleMenu}
             className="px-4 p-2 py-2 bg-gray-200 rounded-lg"
           >
-            <Text className="text-sm font-medium capitalize">{filter}</Text>
+            <Text
+              className="text-sm font-medium capitalize"
+              style={{ color: "#000" }}
+            >
+              {filter}
+            </Text>
           </TouchableOpacity>
         }
       >
@@ -60,6 +65,7 @@ export default function ChartSwitcher({
               closeMenu();
             }}
             title={option.label}
+            titleStyle={{ color: "#000", opacity: 1 }}
           />
         ))}
       </Menu>
