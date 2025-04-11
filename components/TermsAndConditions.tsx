@@ -45,7 +45,7 @@ const TermsAndConditions: React.FC<TermsAndConditionsProps> = ({
         style={{ backgroundColor: "rgba(0,0,0,0.3)" }}
       >
         <View
-          className="w-full max-w-md bg-white rounded-2xl px-5 py-6 shadow-lg"
+          className="w-full max-w-md bg-white rounded-2xl px-5 py-6 p-4 shadow-lg"
           style={{ maxHeight: height * 0.4 }}
         >
           <Text className="text-xl font-bold mb-4 text-center">

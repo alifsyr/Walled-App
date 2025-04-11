@@ -11,12 +11,15 @@ import {
   Alert,
   ActivityIndicator,
 } from "react-native";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import api from "@/services/api"; // pastikan path sesuai
+import { useUserStore } from "@/stores/useUserStore";
 
 export default function SetPin() {
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
+  const { fullName, avatar } = useLocalSearchParams();
+  const setUser = useUserStore((state) => state.setUser);
 
   const handleChange = (text: string) => {
     const onlyDigits = text.replace(/\D/g, "");
@@ -48,6 +51,18 @@ export default function SetPin() {
             Alert.alert("Success", "PIN set and wallet created successfully.", [
               { text: "Continue", onPress: () => router.replace("/home") },
             ]);
+
+            setUser({
+              name: Array.isArray(fullName) ? fullName.join(" ") : fullName,
+              accountType:
+                walletData.data.type === "PERSONAL"
+                  ? "Personal Account"
+                  : "Business Account",
+              profileImage:
+                typeof avatar === "string" && avatar.trim() !== ""
+                  ? { uri: avatar }
+                  : require("@/assets/images/profile-pict.jpg"),
+            });
             break;
           case 400:
             Alert.alert(

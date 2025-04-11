@@ -27,7 +27,7 @@ type FailedRequest = {
 };
 
 const api = axios.create({
-  baseURL: "http://192.168.18.20:8080",
+  baseURL: "http://192.168.21.244:8080",
   timeout: 30000,
 });
 
@@ -46,7 +46,7 @@ async function refreshAccessToken(): Promise<string> {
   const refreshToken = await getRefreshToken();
   if (!refreshToken) throw new Error("No refresh token found");
 
-  const url = `http://192.168.18.20:8080/auth/refresh?refreshToken=${refreshToken}`;
+  const url = `http://192.168.21.244:8080/auth/refresh?refreshToken=${refreshToken}`;
   const response = await axios.post<RefreshResponse>(url);
   const { data } = response;
 

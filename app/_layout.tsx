@@ -1,52 +1,22 @@
-// app/_layout.tsx (atau RootLayout.tsx)
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { router, Stack } from "expo-router";
 import { Image, View, Text, TouchableOpacity, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { Provider as PaperProvider } from "react-native-paper";
 
-import api from "@/services/api";
 import { clearAllTokens } from "@/script/utils";
+import { useUserStore } from "@/stores/useUserStore";
 
 import "../global.css";
 
 export default function RootLayout() {
-  const [user, setUser] = useState<null | {
-    name: string;
-    profileImage: any;
-    accountType: string;
-  }>(null);
+  const name = useUserStore((state) => state.name);
+  const profileImage = useUserStore((state) => state.profileImage);
+  console.log("profileImage", profileImage);
+  const accountType = useUserStore((state) => state.accountType);
+  const clearUser = useUserStore((state) => state.clearUser);
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await api.get("/api/users/me");
-        console.log("layout");
-        const data = res.data.data;
-
-        const profileImage =
-          data.user.avatarUrl && data.user.avatarUrl.trim() !== ""
-            ? { uri: data.user.avatarUrl }
-            : require("@/assets/images/profile-pict.jpg");
-
-        const accountType =
-          data.wallet.type === "PERSONAL"
-            ? "Personal Account"
-            : "Business Account";
-
-        setUser({
-          name: data.user.fullName,
-          profileImage,
-          accountType,
-        });
-      } catch (err: any) {
-        console.log("Error fetching user:", err);
-        // Do not redirect here!
-      }
-    };
-
-    fetchUser();
-  }, []);
+  const isLoggedIn = !!name;
 
   const handleLogout = async () => {
     Alert.alert("Logout", "Are you sure you want to log out?", [
@@ -56,12 +26,12 @@ export default function RootLayout() {
         style: "destructive",
         onPress: async () => {
           await clearAllTokens();
+          clearUser(); // <-- Hapus user dari Zustand
           router.replace("/login");
         },
       },
     ]);
   };
-
   return (
     <PaperProvider>
       <Stack
@@ -76,9 +46,8 @@ export default function RootLayout() {
         <Stack.Screen
           name="set-pin"
           options={{
-            gestureEnabled: false, // 👈 disables iOS swipe back gesture
-            headerShown: true,
-            title: "Your Screen",
+            gestureEnabled: false,
+            headerShown: false,
           }}
         />
 
@@ -89,22 +58,23 @@ export default function RootLayout() {
             headerShown: true,
             headerTitle: "",
             headerLeft: () =>
-              user ? (
+              isLoggedIn ? (
                 <View className="flex-row items-center">
                   <Image
-                    source={user.profileImage}
-                    className="w-11 h-11 rounded-full border-2 border-[#178F8D]"
+                    source={
+                      profileImage ??
+                      require("@/assets/images/profile-pict.jpg")
+                    }
+                    className="w-11 h-11 rounded-full border-2 border-[#3b82f6]"
                   />
                   <View className="ml-3">
-                    <Text className="font-bold text-base">{user.name}</Text>
-                    <Text className="text-gray-500 text-sm">
-                      {user.accountType}
-                    </Text>
+                    <Text className="font-bold text-base">{name}</Text>
+                    <Text className="text-gray-500 text-sm">{accountType}</Text>
                   </View>
                 </View>
               ) : null,
             headerRight: () =>
-              user ? (
+              isLoggedIn ? (
                 <TouchableOpacity onPress={handleLogout}>
                   <Ionicons name="log-out-outline" size={24} color="black" />
                 </TouchableOpacity>

@@ -14,6 +14,7 @@ import { FontAwesome } from "@expo/vector-icons";
 import { saveAccessToken, saveRefreshToken } from "@/script/utils";
 import api from "@/services/api";
 import { getAccessToken } from "@/script/utils";
+import { useUserStore } from "@/stores/useUserStore";
 
 export default function Login() {
   const router = useRouter();
@@ -62,41 +63,74 @@ export default function Login() {
     if (!validateForm()) return;
 
     try {
-      // 1) Login: menggunakan skipAuth agar tidak inject token
+      // 1. Login dan ambil token
       const response = await api.post(
         "/auth/login",
         { email, password },
-        {
-          headers: {
-            skipAuth: true,
-          },
-        },
+        { headers: { skipAuth: true } },
       );
 
       const result = response.data;
-
-      if (result.responseCode === 200) {
-        const { accessToken, refreshToken } = result.data;
-
-        // Simpan token ke SecureStore
-        await saveAccessToken(accessToken);
-        await saveRefreshToken(refreshToken);
-
-        // 2) Setelah token disimpan, panggil endpoint yang membutuhkan auth
-        const pinResponse = await api.post("/api/users/has-pin");
-        const pinResult = pinResponse.data;
-
-        if (pinResult.responseCode === 200) {
-          if (pinResult.data === true) {
-            router.replace("/home");
-          } else {
-            router.replace("/set-pin");
-          }
-        } else {
-          alert("Failed to check PIN status.");
-        }
-      } else {
+      if (result.responseCode !== 200) {
         alert(result.message || "Login failed");
+        return;
+      }
+
+      const { accessToken, refreshToken } = result.data;
+
+      // 2. Simpan token
+      await saveAccessToken(accessToken);
+      await saveRefreshToken(refreshToken);
+
+      // 3. Cek apakah user sudah punya PIN
+      const pinResponse = await api.post("/api/users/has-pin");
+      const pinResult = pinResponse.data;
+
+      if (pinResult.responseCode !== 200) {
+        alert("Failed to check PIN status.");
+        return;
+      }
+
+      // 4. Ambil data user
+      const userRes = await api.get("/api/users/me");
+      const userData = userRes.data;
+
+      if (userData.responseCode !== 200) {
+        throw new Error("Failed to fetch user profile");
+      }
+
+      if (userData.data.wallet === null) {
+        router.replace({
+          pathname: "/set-pin",
+          params: {
+            fullName: userData.data.user.fullName,
+            avatar: userData.data.user.avatarUrl,
+          },
+        });
+        return;
+      }
+
+      const { fullName, avatarUrl } = userData.data.user;
+      const { type } = userData.data.wallet;
+
+      const defaultAvatar = require("@/assets/images/profile-pict.jpg");
+
+      // 5. Simpan ke Zustand
+      useUserStore.getState().setUser({
+        name: fullName,
+        accountType:
+          type === "PERSONAL" ? "Personal Account" : "Business Account",
+        profileImage:
+          typeof avatarUrl === "string" && avatarUrl.trim() !== ""
+            ? { uri: avatarUrl }
+            : defaultAvatar,
+      });
+
+      // 6. Redirect ke halaman sesuai PIN
+      if (pinResult.data === true) {
+        router.replace("/home");
+      } else {
+        router.replace("/set-pin");
       }
     } catch (error) {
       console.error("Login error:", error);

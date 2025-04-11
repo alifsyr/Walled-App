@@ -66,8 +66,16 @@ export default function Home() {
       const userData = userRes.data;
 
       console.log("home");
-      if (userRes.status === 404) {
-        router.replace("/set-pin");
+      console.log("userData", userData);
+      if (userData.data.wallet === null) {
+        console.log("userData", userData);
+        router.replace({
+          pathname: "/set-pin",
+          params: {
+            fullName: userData.data.user.fullName,
+            avatar: userData.data.user.avatarUrl,
+          },
+        });
         return;
       }
 
@@ -148,7 +156,7 @@ export default function Home() {
         <View className="p-2 mt-5">
           <Image
             source={require("@/assets/images/logo.png")}
-            className="w-[81px] h-[77px]"
+            className="w-[81px] h-[81px]"
           />
         </View>
       </View>
@@ -222,64 +230,74 @@ export default function Home() {
       </View>
 
       {/* Transaction History */}
-      <View className="mt-6 h-[350px] w-[90%]">
+      <View className="mt-6 w-[90%]">
         <Text className="text-xl font-bold mb-4">Transaction History</Text>
 
-        <ScrollView showsVerticalScrollIndicator={false}>
-          {transactions.map((item) => {
-            // Asumsikan kamu sudah tahu userWalletId
-            // misalnya userWalletId = 4 (dari user.me)
-            const userWalletId = user.walletId; // misalnya
+        <View style={{ height: 350 }}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true} // penting untuk Android
+          >
+            {transactions.length === 0 ? (
+              <Text className="text-gray-400 text-center mt-10">
+                Belum ada transaksi yang dibuat.
+              </Text>
+            ) : (
+              [...transactions]
+                .sort(
+                  (a, b) =>
+                    new Date(b.transactionDate).getTime() -
+                    new Date(a.transactionDate).getTime(),
+                )
+                .slice(0, 10)
+                .map((item) => {
+                  const userWalletId = user.walletId;
 
-            // Cek apakah ini expense (keluar)
-            // => recipientWalletId != userWalletId berarti uang keluar
-            const isExpense =
-              (item.recipientWalletId !== null &&
-                item.recipientWalletId !== userWalletId) ||
-              item.description === "Sedekah";
+                  const isExpense =
+                    (item.recipientWalletId !== null &&
+                      item.recipientWalletId !== userWalletId) ||
+                    item.description === "Sedekah";
 
-            // Warna nominal
-            const textColor = isExpense ? "text-red-500" : "text-green-500";
+                  const textColor = isExpense
+                    ? "text-red-500"
+                    : "text-green-500";
+                  const sign = isExpense ? "-" : "";
 
-            // Tanda plus/minus
-            const sign = isExpense ? "-" : "";
+                  let displayType = item.transactionType;
+                  if (item.transactionType === "TOP_UP") displayType = "Top Up";
+                  else if (item.transactionType === "TRANSFER")
+                    displayType = "Transfer";
 
-            // Ubahan transactionType
-            let displayType = item.transactionType;
-            if (item.transactionType === "TOP_UP") {
-              displayType = "Top Up";
-            } else if (item.transactionType === "TRANSFER") {
-              displayType = "Transfer";
-            }
+                  const title =
+                    item.description !== "-" ? item.description : displayType;
 
-            // Pakai `item.description` jika ada, atau fallback ke displayType
-            const title = item.description ?? displayType;
+                  const dateStr = new Date(item.transactionDate).toLocaleString(
+                    "id-ID",
+                  );
 
-            // Format tanggal
-            const dateStr = new Date(item.transactionDate).toLocaleString(
-              "id-ID",
-            );
-
-            return (
-              <View
-                key={item.id}
-                className="border p-4 rounded-2xl bg-white border-gray-200 mb-4"
-              >
-                <View className="flex-row justify-between items-center">
-                  <Text className="text-black text-lg font-semibold">
-                    {title}
-                  </Text>
-
-                  <Text className={`${textColor} text-lg font-bold`}>
-                    {sign}
-                    {formatCurrency(item.amount)}
-                  </Text>
-                </View>
-                <Text className="text-gray-500 text-sm mt-1">{dateStr}</Text>
-              </View>
-            );
-          })}
-        </ScrollView>
+                  return (
+                    <View
+                      key={item.id}
+                      className="border p-4 rounded-2xl bg-white border-gray-200 mb-4"
+                    >
+                      <View className="flex-row justify-between items-center">
+                        <Text className="text-black text-lg font-semibold">
+                          {title}
+                        </Text>
+                        <Text className={`${textColor} text-lg font-bold`}>
+                          {sign}
+                          {formatCurrency(item.amount)}
+                        </Text>
+                      </View>
+                      <Text className="text-gray-500 text-sm mt-1">
+                        {dateStr}
+                      </Text>
+                    </View>
+                  );
+                })
+            )}
+          </ScrollView>
+        </View>
       </View>
     </ScrollView>
   );

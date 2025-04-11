@@ -15,6 +15,7 @@ import { router, Link } from "expo-router";
 import TermsAndConditions from "@/components/TermsAndConditions";
 import api from "@/services/api";
 import { saveAccessToken, saveRefreshToken } from "@/script/utils";
+import { useUserStore } from "@/stores/useUserStore"; // ✅ import zustand store
 
 const initialErrors = {
   fullName: "",
@@ -25,7 +26,7 @@ const initialErrors = {
 
 export default function Register() {
   const [modalVisible, setModalVisible] = useState(false);
-  const [agreed, setAgreed] = useState(false); // updated state
+  const [agreed, setAgreed] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -35,6 +36,8 @@ export default function Register() {
 
   const [errors, setErrors] = useState(initialErrors);
   const [loading, setLoading] = useState(false);
+
+  const setUser = useUserStore((state) => state.setUser); // ✅ access setUser from zustand
 
   const validate = () => {
     const newErrors = { ...initialErrors };
@@ -52,9 +55,7 @@ export default function Register() {
 
   const handleRegister = async () => {
     if (!agreed) {
-      Alert.alert(
-        "Please agree to the Terms and Conditions before continuing.",
-      );
+      Alert.alert("Please agree to the Terms and Conditions.");
       return;
     }
 
@@ -86,8 +87,41 @@ export default function Register() {
         const { accessToken, refreshToken } = data.data;
         await saveAccessToken(accessToken);
         await saveRefreshToken(refreshToken);
-        router.replace("/set-pin");
+
+        const userRes = await api.get("/api/users/me");
+        const userData = userRes.data;
+
+        if (userData.responseCode === 200) {
+          if (userData.data.wallet === null) {
+            router.replace({
+              pathname: "/set-pin",
+              params: {
+                fullName: userData.data.user.fullName,
+                avatar: userData.data.user.avatarUrl,
+              },
+            });
+          }
+
+          // const { fullName } = userData.data.user;
+          // const { type } = userData.data.wallet;
+          // const avatar = userData.data.user.avatarUrl;
+          // console.log("avatarUrl", avatar);
+
+          // setUser({
+          //   name: fullName,
+          //   accountType:
+          //     type === "PERSONAL" ? "Personal Account" : "Business Account",
+          //   profileImage:
+          //     avatar && avatar.trim() !== ""
+          //       ? { uri: avatar }
+          //       : require("@/assets/images/profile-pict.jpg"),
+          // });
+        }
+
+        // ✅ Skip cek PIN → langsung ke set-pin
+        // router.replace("/set-pin");
       } else {
+        setLoading(false);
         if (data.message === "Validation failed" && data.data) {
           setErrors((prev) => ({ ...prev, ...data.data }));
         } else {
