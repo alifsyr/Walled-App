@@ -13,8 +13,7 @@
       "distribution": "internal",
       "channel": "preview",
       "android": {
-        "buildType": "apk",
-        "usesCleartextTraffic": true
+        "buildType": "apk"
       }
     },
     "preview-release": {

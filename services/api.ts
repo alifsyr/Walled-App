@@ -27,7 +27,7 @@ type FailedRequest = {
 };
 
 const api = axios.create({
-  baseURL: "http://192.168.21.244:8080",
+  baseURL: "https://walled-api-latest.onrender.com",
   timeout: 30000,
 });
 
@@ -46,7 +46,7 @@ async function refreshAccessToken(): Promise<string> {
   const refreshToken = await getRefreshToken();
   if (!refreshToken) throw new Error("No refresh token found");
 
-  const url = `http://192.168.21.244:8080/auth/refresh?refreshToken=${refreshToken}`;
+  const url = `https://walled-api-latest.onrender.com/auth/refresh?refreshToken=${refreshToken}`;
   const response = await axios.post<RefreshResponse>(url);
   const { data } = response;
 
