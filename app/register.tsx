@@ -112,6 +112,19 @@ export default function Register() {
     try {
       setLoading(true);
       const normalizedPhone = normalizePhoneNumber(phoneNumber);
+      console.log(normalizedPhone);
+
+      let avatar = avatarUrl;
+      if (!avatar || avatar.trim() === "") {
+        const names = fullName.trim().split(" ");
+        const firstName = names[0];
+        const lastName = names[1];
+        if (lastName) {
+          avatar = `https://avatar.iran.liara.run/username?username=${firstName}${lastName}`;
+        } else {
+          avatar = `https://avatar.iran.liara.run/username?username=${firstName}`;
+        }
+      }
 
       const response = await api.post(
         "/auth/signup",
@@ -119,8 +132,8 @@ export default function Register() {
           email,
           fullName,
           password,
-          normalizedPhone,
-          avatarUrl,
+          phoneNumber: normalizedPhone,
+          avatarUrl: avatar,
         },
         { headers: { skipAuth: true } },
       );

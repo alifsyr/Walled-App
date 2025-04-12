@@ -152,13 +152,21 @@ export default function Home() {
       <View className="flex-row justify-between items-center bg-white p-4 rounded-2xl w-[90%] mt-4">
         <View>
           <Text className="text-lg text-gray-800 font-medium">Balance</Text>
-          <View className="flex-row items-center gap-2 mt-1">
-            <Text className="text-black text-2xl font-bold">
+          <View className="relative mt-1 w-[180px]">
+            <Text
+              className="text-black text-2xl font-bold pr-6" // beri padding kanan agar teks tidak tertabrak icon
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {showBalance
                 ? `Rp ${user.balance.toLocaleString("id-ID")}`
                 : "Rp ******"}
             </Text>
-            <TouchableOpacity onPress={() => setShowBalance((v) => !v)}>
+
+            <TouchableOpacity
+              onPress={() => setShowBalance((v) => !v)}
+              className="absolute right-0 top-1"
+            >
               <FontAwesome
                 name={showBalance ? "eye" : "eye-slash"}
                 size={18}
