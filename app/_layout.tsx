@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { router, Stack } from "expo-router";
 import { Image, View, Text, TouchableOpacity, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
@@ -6,10 +6,18 @@ import { Provider as PaperProvider } from "react-native-paper";
 
 import { clearAllTokens } from "@/script/utils";
 import { useUserStore } from "@/stores/useUserStore";
+import { useBlockBackOnScreens } from "@/hooks/useBlockBackOnCertainScreens";
 
 import "../global.css";
 
 export default function RootLayout() {
+  useBlockBackOnScreens([
+    "home",
+    "set-pin",
+    "transaction-status",
+    "sedekah",
+    "login",
+  ]);
   const name = useUserStore((state) => state.name);
   const profileImage = useUserStore((state) => state.profileImage);
   console.log("profileImage", profileImage);
@@ -47,6 +55,7 @@ export default function RootLayout() {
           name="set-pin"
           options={{
             gestureEnabled: false,
+            headerBackVisible: false,
             headerShown: false,
           }}
         />
@@ -55,6 +64,7 @@ export default function RootLayout() {
           name="home"
           options={{
             gestureEnabled: false,
+            headerBackVisible: false,
             headerShown: true,
             headerTitle: "",
             headerLeft: () =>
@@ -75,8 +85,12 @@ export default function RootLayout() {
               ) : null,
             headerRight: () =>
               isLoggedIn ? (
-                <TouchableOpacity onPress={handleLogout}>
-                  <Ionicons name="log-out-outline" size={24} color="black" />
+                <TouchableOpacity
+                  onPress={handleLogout}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ padding: 8 }}
+                >
+                  <Ionicons name="log-out-outline" size={24} color="red" />
                 </TouchableOpacity>
               ) : null,
           }}
@@ -85,14 +99,20 @@ export default function RootLayout() {
         <Stack.Screen
           name="transfer"
           options={{
-            gestureEnabled: false,
+            gestureEnabled: true,
+            headerBackVisible: false,
             headerShown: true,
             headerTitle: "",
             headerLeft: () => (
               <View className="flex-row items-center">
-                <TouchableOpacity onPress={() => router.back()}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ padding: 8 }}
+                >
                   <Ionicons name="chevron-back" size={24} color="black" />
                 </TouchableOpacity>
+
                 <Text className="text-2xl font-bold ml-2">Transfer</Text>
               </View>
             ),
@@ -102,14 +122,20 @@ export default function RootLayout() {
         <Stack.Screen
           name="topup"
           options={{
-            gestureEnabled: false,
+            gestureEnabled: true,
+            headerBackVisible: false,
             headerShown: true,
             headerTitle: "",
             headerLeft: () => (
               <View className="flex-row items-center">
-                <TouchableOpacity onPress={() => router.back()}>
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  style={{ padding: 8 }}
+                >
                   <Ionicons name="chevron-back" size={24} color="black" />
                 </TouchableOpacity>
+
                 <Text className="text-2xl font-bold ml-2">Top Up</Text>
               </View>
             ),

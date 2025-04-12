@@ -22,6 +22,7 @@ const initialErrors = {
   email: "",
   password: "",
   phoneNumber: "",
+  avatarUrl: "",
 };
 
 export default function Register() {
@@ -39,30 +40,72 @@ export default function Register() {
 
   const setUser = useUserStore((state) => state.setUser); // ✅ access setUser from zustand
 
+  const normalizePhoneNumber = (number: string) => {
+    if (number.startsWith("+62")) {
+      return number.replace("+62", "0");
+    }
+    return number;
+  };
+
   const validate = () => {
     const newErrors = { ...initialErrors };
+    const normalizedPhone = normalizePhoneNumber(phoneNumber);
+
     if (!fullName.trim()) newErrors.fullName = "Full name is required";
     if (!email.trim()) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(email))
       newErrors.email = "Invalid email address";
-    if (!password) newErrors.password = "Password is required";
-    else if (password.length < 6) newErrors.password = "Minimum 6 characters";
-    if (!phoneNumber.trim()) newErrors.phoneNumber = "Phone number is required";
+    if (!password) {
+      newErrors.password = "Password is required";
+    } else if (password.length < 8) {
+      newErrors.password = "Minimum 8 characters";
+    } else {
+      const hasLower = /[a-z]/.test(password);
+      const hasUpper = /[A-Z]/.test(password);
+      const hasNumber = /\d/.test(password);
+      const hasSpecial = /[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-=|]/.test(password);
+
+      const comboCount = [hasLower, hasUpper, hasNumber, hasSpecial].filter(
+        Boolean,
+      ).length;
+
+      if (comboCount < 2) {
+        newErrors.password =
+          "Password must include at least two of: lowercase, uppercase, number, special character";
+      }
+    }
+
+    if (!normalizedPhone.trim()) {
+      newErrors.phoneNumber = "Phone number is required";
+    } else if (!/^[0-9]+$/.test(normalizedPhone)) {
+      newErrors.phoneNumber = "Phone number must contain only digits";
+    } else if (normalizedPhone.length < 10 || normalizedPhone.length > 14) {
+      newErrors.phoneNumber = "Phone number must be between 10–14 digits";
+    }
+
+    if (
+      avatarUrl.trim() &&
+      !/^https?:\/\/[\w\-]+(\.[\w\-]+)+[/#?]?.*$/.test(avatarUrl)
+    ) {
+      newErrors.avatarUrl = "Please enter a valid URL";
+    }
 
     setErrors(newErrors);
     return Object.values(newErrors).every((val) => !val);
   };
 
   const handleRegister = async () => {
+    if (!validate()) return;
+
     if (!agreed) {
       Alert.alert("Please agree to the Terms and Conditions.");
       return;
     }
 
-    if (!validate()) return;
-
     try {
       setLoading(true);
+
+      const normalizedPhone = normalizePhoneNumber(phoneNumber);
 
       const response = await api.post(
         "/auth/signup",
@@ -70,7 +113,7 @@ export default function Register() {
           email,
           fullName,
           password,
-          phoneNumber,
+          normalizedPhone,
           avatarUrl,
         },
         {
@@ -101,25 +144,7 @@ export default function Register() {
               },
             });
           }
-
-          // const { fullName } = userData.data.user;
-          // const { type } = userData.data.wallet;
-          // const avatar = userData.data.user.avatarUrl;
-          // console.log("avatarUrl", avatar);
-
-          // setUser({
-          //   name: fullName,
-          //   accountType:
-          //     type === "PERSONAL" ? "Personal Account" : "Business Account",
-          //   profileImage:
-          //     avatar && avatar.trim() !== ""
-          //       ? { uri: avatar }
-          //       : require("@/assets/images/profile-pict.jpg"),
-          // });
         }
-
-        // ✅ Skip cek PIN → langsung ke set-pin
-        // router.replace("/set-pin");
       } else {
         setLoading(false);
         if (data.message === "Validation failed" && data.data) {
@@ -188,17 +213,20 @@ export default function Register() {
           {renderInput(
             "Phone Number",
             phoneNumber,
-            setPhoneNumber,
+            (text: string) => setPhoneNumber(text.replace(/[^\d+]/g, "")),
             "phoneNumber",
             { keyboardType: "phone-pad" },
           )}
-          <TextInput
-            placeholder="Avatar Url (optional)"
-            placeholderTextColor="black"
-            value={avatarUrl}
-            onChangeText={setAvatarUrl}
-            className="h-12 rounded-lg mb-5 px-3.5 bg-[#f1f1f1]"
-          />
+          {renderInput(
+            "Avatar Url (optional)",
+            avatarUrl,
+            (text: string) => setAvatarUrl(text),
+            "avatarUrl",
+            {
+              autoCapitalize: "none",
+              keyboardType: "url",
+            },
+          )}
         </View>
 
         <TouchableOpacity
@@ -224,7 +252,7 @@ export default function Register() {
           </TouchableOpacity>
           <View className="flex flex-row mt-5">
             <Text>Have an account?</Text>
-            <Link href="/" className="text-blue-500 ml-1">
+            <Link href="/login" className="text-blue-500 ml-1">
               Login here
             </Link>
           </View>
