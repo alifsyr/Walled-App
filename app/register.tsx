@@ -9,13 +9,12 @@ import {
   Alert,
   TouchableWithoutFeedback,
   Keyboard,
-  ActivityIndicator,
 } from "react-native";
 import { router, Link } from "expo-router";
 import TermsAndConditions from "@/components/TermsAndConditions";
 import api from "@/services/api";
 import { saveAccessToken, saveRefreshToken } from "@/script/utils";
-import { useUserStore } from "@/stores/useUserStore"; // ✅ import zustand store
+import { useUserStore } from "@/stores/useUserStore";
 
 const initialErrors = {
   fullName: "",
@@ -38,13 +37,23 @@ export default function Register() {
   const [errors, setErrors] = useState(initialErrors);
   const [loading, setLoading] = useState(false);
 
-  const setUser = useUserStore((state) => state.setUser); // ✅ access setUser from zustand
+  const setUser = useUserStore((state) => state.setUser);
 
   const normalizePhoneNumber = (number: string) => {
     if (number.startsWith("+62")) {
       return number.replace("+62", "0");
     }
     return number;
+  };
+
+  const isFormValid = () => {
+    return (
+      fullName.trim() !== "" &&
+      email.trim() !== "" &&
+      password.trim() !== "" &&
+      phoneNumber.trim() !== "" &&
+      !loading
+    );
   };
 
   const validate = () => {
@@ -55,20 +64,19 @@ export default function Register() {
     if (!email.trim()) newErrors.email = "Email is required";
     else if (!/\S+@\S+\.\S+/.test(email))
       newErrors.email = "Invalid email address";
+
     if (!password) {
       newErrors.password = "Password is required";
-    } else if (password.length < 8) {
-      newErrors.password = "Minimum 8 characters";
+    } else if (password.length < 6) {
+      newErrors.password = "Minimum 6 characters";
     } else {
       const hasLower = /[a-z]/.test(password);
       const hasUpper = /[A-Z]/.test(password);
       const hasNumber = /\d/.test(password);
       const hasSpecial = /[!@#$%^&*()_+{}\[\]:;<>,.?~\\/-=|]/.test(password);
-
       const comboCount = [hasLower, hasUpper, hasNumber, hasSpecial].filter(
         Boolean,
       ).length;
-
       if (comboCount < 2) {
         newErrors.password =
           "Password must include at least two of: lowercase, uppercase, number, special character";
@@ -96,7 +104,6 @@ export default function Register() {
 
   const handleRegister = async () => {
     if (!validate()) return;
-
     if (!agreed) {
       Alert.alert("Please agree to the Terms and Conditions.");
       return;
@@ -104,7 +111,6 @@ export default function Register() {
 
     try {
       setLoading(true);
-
       const normalizedPhone = normalizePhoneNumber(phoneNumber);
 
       const response = await api.post(
@@ -116,11 +122,7 @@ export default function Register() {
           normalizedPhone,
           avatarUrl,
         },
-        {
-          headers: {
-            skipAuth: true,
-          },
-        },
+        { headers: { skipAuth: true } },
       );
 
       const data = response.data;
@@ -134,19 +136,16 @@ export default function Register() {
         const userRes = await api.get("/api/users/me");
         const userData = userRes.data;
 
-        if (userData.responseCode === 200) {
-          if (userData.data.wallet === null) {
-            router.replace({
-              pathname: "/set-pin",
-              params: {
-                fullName: userData.data.user.fullName,
-                avatar: userData.data.user.avatarUrl,
-              },
-            });
-          }
+        if (userData.responseCode === 200 && userData.data.wallet === null) {
+          router.replace({
+            pathname: "/set-pin",
+            params: {
+              fullName: userData.data.user.fullName,
+              avatar: userData.data.user.avatarUrl,
+            },
+          });
         }
       } else {
-        setLoading(false);
         if (data.message === "Validation failed" && data.data) {
           setErrors((prev) => ({ ...prev, ...data.data }));
         } else {
@@ -163,6 +162,8 @@ export default function Register() {
         "Network Error",
         "Unable to register. Please try again later.",
       );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -241,15 +242,16 @@ export default function Register() {
         <View className="w-4/5 mt-10">
           <TouchableOpacity
             onPress={handleRegister}
-            className="bg-[#007BFF] rounded-lg h-12 justify-center items-center"
-            disabled={loading}
+            disabled={!isFormValid()}
+            className={`rounded-lg h-12 justify-center items-center ${
+              isFormValid() ? "bg-[#007BFF]" : "bg-gray-300"
+            }`}
           >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text className="text-white text-base font-bold">Register</Text>
-            )}
+            <Text className="text-white text-base font-bold">
+              {loading ? "Registering..." : "Register"}
+            </Text>
           </TouchableOpacity>
+
           <View className="flex flex-row mt-5">
             <Text>Have an account?</Text>
             <Link href="/login" className="text-blue-500 ml-1">

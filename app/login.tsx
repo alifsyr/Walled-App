@@ -9,20 +9,29 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   StyleSheet,
+  ActivityIndicator,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
-import { saveAccessToken, saveRefreshToken } from "@/script/utils";
+import {
+  saveAccessToken,
+  saveRefreshToken,
+  getAccessToken,
+} from "@/script/utils";
 import api from "@/services/api";
-import { getAccessToken } from "@/script/utils";
 import { useUserStore } from "@/stores/useUserStore";
 
 export default function Login() {
   const router = useRouter();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [errors, setErrors] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+  // ✅ Check session on mount
   useEffect(() => {
     const checkSession = async () => {
       const token = await getAccessToken();
-
       if (token) {
         console.log("Token found, redirecting to home...");
         router.replace("/home");
@@ -30,10 +39,11 @@ export default function Login() {
     };
     checkSession();
   }, [router]);
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errors, setErrors] = useState({ email: "", password: "" });
-  const [showPassword, setShowPassword] = useState(false);
+
+  // ✅ Form validation logic
+  const isFormValid = () => {
+    return email.trim() !== "" && password.trim() !== "" && !loading;
+  };
 
   const validateForm = () => {
     let valid = true;
@@ -50,9 +60,6 @@ export default function Login() {
     if (!password) {
       newErrors.password = "Password is required.";
       valid = false;
-    } else if (password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters.";
-      valid = false;
     }
 
     setErrors(newErrors);
@@ -61,8 +68,9 @@ export default function Login() {
 
   const handleLogin = async () => {
     if (!validateForm()) return;
-
     try {
+      setLoading(true);
+
       // 1. Login dan ambil token
       const response = await api.post(
         "/auth/login",
@@ -77,12 +85,10 @@ export default function Login() {
       }
 
       const { accessToken, refreshToken } = result.data;
-
-      // 2. Simpan token
       await saveAccessToken(accessToken);
       await saveRefreshToken(refreshToken);
 
-      // 3. Cek apakah user sudah punya PIN
+      // 2. Cek apakah user sudah punya PIN
       const pinResponse = await api.post("/api/users/has-pin");
       const pinResult = pinResponse.data;
 
@@ -91,7 +97,7 @@ export default function Login() {
         return;
       }
 
-      // 4. Ambil data user
+      // 3. Ambil data user
       const userRes = await api.get("/api/users/me");
       const userData = userRes.data;
 
@@ -112,10 +118,9 @@ export default function Login() {
 
       const { fullName, avatarUrl } = userData.data.user;
       const { type } = userData.data.wallet;
-
       const defaultAvatar = require("@/assets/images/profile-pict.jpg");
 
-      // 5. Simpan ke Zustand
+      // 4. Simpan ke Zustand
       useUserStore.getState().setUser({
         name: fullName,
         accountType:
@@ -126,7 +131,7 @@ export default function Login() {
             : defaultAvatar,
       });
 
-      // 6. Redirect ke halaman sesuai PIN
+      // 5. Redirect
       if (pinResult.data === true) {
         router.replace("/home");
       } else {
@@ -135,6 +140,8 @@ export default function Login() {
     } catch (error) {
       console.error("Login error:", error);
       alert("An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -148,6 +155,7 @@ export default function Login() {
           />
           <Text style={styles.title}>Walled</Text>
         </View>
+
         <View className="w-4/5 bg-white rounded-lg">
           <TextInput
             placeholder="Email"
@@ -159,9 +167,10 @@ export default function Login() {
             onChangeText={setEmail}
             autoCapitalize="none"
           />
-          {errors.email ? (
+          {errors.email && (
             <Text className="text-red-500 mb-4">{errors.email}</Text>
-          ) : null}
+          )}
+
           <View className="relative">
             <TextInput
               placeholder="Password"
@@ -184,15 +193,22 @@ export default function Login() {
               />
             </TouchableOpacity>
           </View>
-          {errors.password ? (
+          {errors.password && (
             <Text className="text-red-500 mb-4">{errors.password}</Text>
-          ) : null}
+          )}
+
           <TouchableOpacity
             onPress={handleLogin}
-            className="bg-[#007BFF] rounded-lg h-12 justify-center mt-16 items-center"
+            disabled={!isFormValid()}
+            className={`rounded-lg h-12 justify-center mt-16 items-center ${
+              isFormValid() ? "bg-[#007BFF]" : "bg-gray-300"
+            }`}
           >
-            <Text className="text-white text-base font-bold">Login</Text>
+            <Text className="text-white text-base font-bold">
+              {loading ? "Logging in..." : "Login"}
+            </Text>
           </TouchableOpacity>
+
           <View className="flex flex-row mt-5">
             <Text>Don't have an account?</Text>
             <Link href="/register" className="text-blue-500 ml-1">
