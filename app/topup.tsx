@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import {
+  Alert,
   Keyboard,
   Text,
   TextInput,
@@ -40,10 +41,15 @@ export default function Topup() {
     if (isTopupDisabled) return;
 
     const numericAmount = Number(formattedAmount.replace(/\./g, ""));
+    if (numericAmount <= 0) {
+      Alert.alert("Invalid Amount", "Amount must be greater than 0.");
+      return;
+    }
     const trimmedNotes = notes.trim() || "-";
     const trxType = "Top Up";
     const trxId = generateTransactionId(trxType);
     const timestamp = new Date().toLocaleTimeString("id-ID", {
+      timeZone: "Asia/Jakarta",
       day: "2-digit",
       month: "short",
       year: "numeric",

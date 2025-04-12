@@ -92,6 +92,7 @@ export default function Transfer() {
     const trxType = "Transfer";
     const trxId = generateTransactionId(trxType);
     const timestamp = new Date().toLocaleTimeString("id-ID", {
+      timeZone: "Asia/Jakarta",
       day: "2-digit",
       month: "short",
       year: "numeric",

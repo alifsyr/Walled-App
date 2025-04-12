@@ -18,17 +18,13 @@ import { formatCurrency, getToken } from "@/script/utils";
 import api from "@/services/api"; // sesuaikan dengan path api.ts Anda
 
 export default function Home() {
-  // === State loading
   const [loading, setLoading] = useState(true);
-
-  // === State tampilan chart
   const [showBalance, setShowBalance] = useState(false);
   const [chartType, setChartType] = useState<"pie" | "bar">("pie");
   const [filter, setFilter] = useState<"weekly" | "monthly" | "quarterly">(
     "monthly",
   );
 
-  // === State data user
   const [user, setUser] = useState<{
     name: string;
     balance: number;
@@ -36,7 +32,6 @@ export default function Home() {
     walletId: number;
   } | null>(null);
 
-  // === State data transaksi
   const [transactions, setTransactions] = useState<
     {
       id: number;
@@ -49,26 +44,20 @@ export default function Home() {
     }[]
   >([]);
 
-  // === Gunakan useChartData untuk chart
   const { barData, income, expense, savingsPercentage } = useChartData(
     transactions,
     filter,
     user?.walletId ?? 0,
   );
 
-  // === Fungsi fetch data user & transactions
   const fetchUserData = useCallback(async () => {
     try {
       setLoading(true);
 
-      // 1) Ambil data user dari endpoint /api/users/me
       const userRes = await api.get("/api/users/me");
       const userData = userRes.data;
 
-      console.log("home");
-      console.log("userData", userData);
       if (userData.data.wallet === null) {
-        console.log("userData", userData);
         router.replace({
           pathname: "/set-pin",
           params: {
@@ -96,7 +85,6 @@ export default function Home() {
         walletId: id,
       });
 
-      // 2) Ambil transaksi dari endpoint /api/transactions/me
       const trxRes = await api.get("/api/transactions/me");
       const trxData = trxRes.data;
 
@@ -107,18 +95,15 @@ export default function Home() {
       setTransactions(trxData.data || []);
     } catch (error) {
       console.warn("fetchUserData error:", error);
-      // Jika error karena token invalid, router.replace("/") bisa dipanggil di interceptor api.ts
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // === load data sekali di mount
   useEffect(() => {
     fetchUserData();
   }, [fetchUserData]);
 
-  // === Jika masih loading
   if (loading) {
     return (
       <View className="flex-1 bg-white justify-center items-center">
@@ -128,7 +113,6 @@ export default function Home() {
     );
   }
 
-  // === Jika user null -> failed
   if (!user) {
     return (
       <View className="flex-1 bg-white justify-center items-center">
@@ -137,13 +121,11 @@ export default function Home() {
     );
   }
 
-  // === Render UI utama
   return (
     <ScrollView
       className="flex-1 bg-[#FAFBFD]"
       contentContainerStyle={{ alignItems: "center", paddingBottom: 32 }}
     >
-      {/* Header Section */}
       <View className="flex-row">
         <View className="flex-col mt-5">
           <Text className="text-2xl font-bold">
@@ -161,14 +143,12 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Account Number */}
       <View className="bg-[#0061FF] px-6 py-3 mt-6 rounded-xl w-[90%]">
         <Text className="text-white text-base font-medium">
           Account No. <Text className="font-bold">{user.accountNumber}</Text>
         </Text>
       </View>
 
-      {/* Balance */}
       <View className="flex-row justify-between items-center bg-white p-4 rounded-2xl w-[90%] mt-4">
         <View>
           <Text className="text-lg text-gray-800 font-medium">Balance</Text>
@@ -204,7 +184,6 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Report Section */}
       <View className="w-[90%] bg-white mt-4 rounded-2xl">
         <View className="flex-row justify-between items-center px-4 pt-4">
           <Text className="text-lg font-bold">Your Spending</Text>
@@ -229,14 +208,13 @@ export default function Home() {
         </View>
       </View>
 
-      {/* Transaction History */}
       <View className="mt-6 w-[90%]">
         <Text className="text-xl font-bold mb-4">Transaction History</Text>
 
         <View style={{ height: 350 }}>
           <ScrollView
             showsVerticalScrollIndicator={false}
-            nestedScrollEnabled={true} // penting untuk Android
+            nestedScrollEnabled={true}
           >
             {transactions.length === 0 ? (
               <Text className="text-gray-400 text-center mt-10">
@@ -252,7 +230,6 @@ export default function Home() {
                 .slice(0, 10)
                 .map((item) => {
                   const userWalletId = user.walletId;
-
                   const isExpense =
                     (item.recipientWalletId !== null &&
                       item.recipientWalletId !== userWalletId) ||
