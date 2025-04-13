@@ -12,6 +12,7 @@ import { router } from "expo-router";
 import InlineDropdown from "@/components/InlineDropdown";
 import { generateTransactionId, formatCurrency } from "@/script/utils";
 import api from "@/services/api";
+import { useUserStore } from "@/stores/useUserStore";
 
 const MAX_NOTE_LENGTH = 100;
 
@@ -19,10 +20,13 @@ export default function Transfer() {
   const [beneficiaryList, setBeneficiaryList] = useState<
     { label: string; value: string }[]
   >([]);
-  const [beneficiary, setBeneficiary] = useState<string>();
+  const [beneficiaryId, setBeneficiaryId] = useState<string>("");
+  const [beneficiaryName, setBeneficiaryName] = useState<string>("");
   const [formattedAmount, setFormattedAmount] = useState("");
   const [notes, setNotes] = useState("");
   const [accountBalance, setAccountBalance] = useState<number>(0);
+
+  const fullName = useUserStore((state) => state.name);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -30,7 +34,10 @@ export default function Transfer() {
         const res = await api.get("/api/users");
         const users = res.data.data || [];
         const formatted = users
-          .filter((item: any) => item.wallet?.accountNumber)
+          .filter(
+            (item: any) =>
+              item.wallet?.accountNumber && item.user.fullName !== fullName,
+          )
           .map((item: any) => {
             const account = item.wallet.accountNumber;
             const name = item.user.fullName.split(" ")[0];
@@ -73,14 +80,14 @@ export default function Transfer() {
     setNotes(text.slice(0, MAX_NOTE_LENGTH));
   }, []);
 
-  const isTransferDisabled = !beneficiary || !formattedAmount;
+  const isTransferDisabled = !beneficiaryId || !formattedAmount;
 
   const handleTransfer = useCallback(() => {
     if (isTransferDisabled) return;
 
     const numericAmount = Number(formattedAmount.replace(/\./g, ""));
-    if (numericAmount <= 0) {
-      Alert.alert("Invalid Amount", "Amount must be greater than 0.");
+    if (numericAmount < 10000) {
+      Alert.alert("Invalid Amount", "Minimum amount Rp10.000");
       return;
     }
     if (numericAmount > accountBalance) {
@@ -107,13 +114,21 @@ export default function Transfer() {
       params: {
         trxId,
         type: trxType,
-        beneficiary,
+        beneficiaryId: beneficiaryId,
+        beneficiaryName,
         amount: numericAmount,
         notes: trimmedNotes,
         time: timestamp,
       },
     });
-  }, [beneficiary, formattedAmount, notes, isTransferDisabled, accountBalance]);
+  }, [
+    beneficiaryId,
+    beneficiaryName,
+    formattedAmount,
+    notes,
+    isTransferDisabled,
+    accountBalance,
+  ]);
 
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -128,7 +143,13 @@ export default function Transfer() {
               fontSize={16}
               fontColor="#000"
               data={beneficiaryList}
-              onSelect={(value) => setBeneficiary(value || "")}
+              onSelect={(value) => {
+                setBeneficiaryId(value || "");
+                const selected = beneficiaryList.find(
+                  (item) => item.value === value,
+                );
+                setBeneficiaryName(selected?.label || "");
+              }}
               placeholder="Beneficiary Account Number"
             />
           </View>

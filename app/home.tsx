@@ -126,7 +126,7 @@ export default function Home() {
       className="flex-1 bg-[#FAFBFD]"
       contentContainerStyle={{ alignItems: "center", paddingBottom: 32 }}
     >
-      <View className="flex-row">
+      <View className="flex-row w-[90%]">
         <View className="flex-col mt-5">
           <Text className="text-2xl font-bold">
             Welcome, {user.name.split(" ", 1)}
@@ -153,26 +153,28 @@ export default function Home() {
         <View>
           <Text className="text-lg text-gray-800 font-medium">Balance</Text>
           <View className="relative mt-1 w-[180px]">
-            <Text
-              className="text-black text-2xl font-bold pr-6" // beri padding kanan agar teks tidak tertabrak icon
-              numberOfLines={1}
-              ellipsizeMode="tail"
-            >
-              {showBalance
-                ? `Rp ${user.balance.toLocaleString("id-ID")}`
-                : "Rp ******"}
-            </Text>
+            <View className="flex-row items-center">
+              <Text
+                className="text-black text-2xl font-bold"
+                numberOfLines={1}
+                ellipsizeMode="tail"
+              >
+                {showBalance
+                  ? `Rp ${user.balance.toLocaleString("id-ID")}`
+                  : "Rp ******"}
+              </Text>
 
-            <TouchableOpacity
-              onPress={() => setShowBalance((v) => !v)}
-              className="absolute right-0 top-1"
-            >
-              <FontAwesome
-                name={showBalance ? "eye" : "eye-slash"}
-                size={18}
-                color="#6B7280"
-              />
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setShowBalance((v) => !v)}
+                className="ml-2"
+              >
+                <FontAwesome
+                  name={showBalance ? "eye" : "eye-slash"}
+                  size={18}
+                  color="#6B7280"
+                />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 

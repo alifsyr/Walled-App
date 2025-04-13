@@ -15,6 +15,7 @@ import TermsAndConditions from "@/components/TermsAndConditions";
 import api from "@/services/api";
 import { saveAccessToken, saveRefreshToken } from "@/script/utils";
 import { useUserStore } from "@/stores/useUserStore";
+import { FontAwesome } from "@expo/vector-icons";
 
 const initialErrors = {
   fullName: "",
@@ -36,12 +37,15 @@ export default function Register() {
 
   const [errors, setErrors] = useState(initialErrors);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const setUser = useUserStore((state) => state.setUser);
 
   const normalizePhoneNumber = (number: string) => {
     if (number.startsWith("+62")) {
       return number.replace("+62", "0");
+    } else if (number.startsWith("62")) {
+      return number.replace("62", "0");
     }
     return number;
   };
@@ -67,8 +71,8 @@ export default function Register() {
 
     if (!password) {
       newErrors.password = "Password is required";
-    } else if (password.length < 6) {
-      newErrors.password = "Minimum 6 characters";
+    } else if (password.length < 8) {
+      newErrors.password = "Minimum 8 characters";
     } else {
       const hasLower = /[a-z]/.test(password);
       const hasUpper = /[A-Z]/.test(password);
@@ -77,9 +81,9 @@ export default function Register() {
       const comboCount = [hasLower, hasUpper, hasNumber, hasSpecial].filter(
         Boolean,
       ).length;
-      if (comboCount < 2) {
+      if (comboCount < 4) {
         newErrors.password =
-          "Password must include at least two of: lowercase, uppercase, number, special character";
+          "Password must include lowercase, uppercase, number, special character";
       }
     }
 
@@ -112,7 +116,6 @@ export default function Register() {
     try {
       setLoading(true);
       const normalizedPhone = normalizePhoneNumber(phoneNumber);
-      console.log(normalizedPhone);
 
       let avatar = avatarUrl;
       if (!avatar || avatar.trim() === "") {
@@ -217,13 +220,31 @@ export default function Register() {
 
         <View className="w-4/5 bg-white rounded-lg">
           {renderInput("Full Name", fullName, setFullName, "fullName")}
-          {renderInput("Email", email, setEmail, "email", {
-            keyboardType: "email-address",
-            autoCapitalize: "none",
-          })}
-          {renderInput("Password", password, setPassword, "password", {
-            secureTextEntry: true,
-          })}
+          {renderInput(
+            "Email",
+            email,
+            (text: string) => setEmail(text.toLowerCase()),
+            "email",
+            {
+              keyboardType: "email-address",
+              autoCapitalize: "none",
+            },
+          )}
+          <View className="relative">
+            {renderInput("Password", password, setPassword, "password", {
+              secureTextEntry: !showPassword,
+            })}
+            <TouchableOpacity
+              onPress={() => setShowPassword(!showPassword)}
+              className="absolute right-3 top-3"
+            >
+              <FontAwesome
+                name={showPassword ? "eye-slash" : "eye"}
+                size={20}
+                color="gray"
+              />
+            </TouchableOpacity>
+          </View>
           {renderInput(
             "Phone Number",
             phoneNumber,

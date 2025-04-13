@@ -20,7 +20,6 @@ export default function RootLayout() {
   ]);
   const name = useUserStore((state) => state.name);
   const profileImage = useUserStore((state) => state.profileImage);
-  console.log("profileImage", profileImage);
   const accountType = useUserStore((state) => state.accountType);
   const clearUser = useUserStore((state) => state.clearUser);
 

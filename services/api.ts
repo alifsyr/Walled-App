@@ -60,15 +60,20 @@ async function refreshAccessToken(): Promise<string> {
   return accessToken;
 }
 
+// ✅ REQUEST INTERCEPTOR: Tambah log lengkap
 api.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     const shouldSkipAuth =
       config.headers?.skipAuth === "true" || config.headers?.skipAuth === true;
 
-    // ✅ LOG endpoint & method
-    console.log(
-      `[REQUEST] ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`,
-    );
+    // ✅ Logging semua informasi request
+    console.log("📤 [REQUEST]", {
+      method: config.method?.toUpperCase(),
+      url: `${config.baseURL}${config.url}`,
+      params: config.params,
+      data: config.data,
+      headers: config.headers,
+    });
 
     if (shouldSkipAuth) {
       if (config.headers instanceof AxiosHeaders) {
@@ -90,32 +95,44 @@ api.interceptors.request.use(
     return config;
   },
   (error) => {
-    console.log("[REQUEST ERROR]", error);
+    console.log("❌ [REQUEST ERROR]", error);
     return Promise.reject(error);
   },
 );
 
+// ✅ RESPONSE INTERCEPTOR: Log respons dan error
 api.interceptors.response.use(
-  (response: AxiosResponse) => response,
+  (response: AxiosResponse) => {
+    console.log("✅ [RESPONSE]", {
+      url: response.config?.url,
+      status: response.status,
+      data: response.data,
+    });
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as
       | InternalAxiosRequestConfig
       | undefined;
 
     if (!error.response || !originalRequest) {
+      console.log("❌ [NETWORK ERROR]", error.message);
       return Promise.reject(error);
     }
 
     const statusCode = error.response.status;
-    console.log("error", error);
-    console.log("statusCode", statusCode);
+
+    console.log("❌ [ERROR RESPONSE]", {
+      url: originalRequest.url,
+      status: statusCode,
+      data: error.response.data,
+    });
 
     // 👉 Untuk error selain 403, tampilkan alert
     if ([400, 401, 404].includes(statusCode)) {
       return Promise.resolve(error.response);
     }
 
-    // 👉 Hanya refresh token jika 403
     if (statusCode !== 403) {
       return Promise.reject(error);
     }

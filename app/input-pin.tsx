@@ -18,12 +18,13 @@ export default function ConfirmPin() {
   const {
     trxId = "",
     type = "",
-    beneficiary = "",
+    beneficiaryId = "",
     sourceOfFund,
     amount = "",
     notes = "-",
     time = "",
     isSedekah = "",
+    beneficiaryName = "",
   } = useLocalSearchParams();
 
   const [pin, setPin] = useState("");
@@ -47,8 +48,6 @@ export default function ConfirmPin() {
       const verifyRes = await api.post("/auth/verify-pin", { pin });
       const verifyResult = verifyRes.data;
 
-      console.log("verifyResult", verifyResult);
-
       if (verifyResult.responseCode !== 200 || verifyResult.data !== null) {
         Alert.alert("PIN Incorrect", "Please try again.");
         setPin(""); // 🔁 Reset input agar bisa langsung ketik ulang
@@ -65,8 +64,6 @@ export default function ConfirmPin() {
         });
         transactionResult = res.data;
       } else if (type === "Transfer") {
-        console.log("beneficiary", beneficiary);
-        console.log("amount", amount);
         if (isSedekah === "true") {
           const res = await api.post("/api/transactions/transfer", {
             recipientWalletId: 0,
@@ -77,14 +74,13 @@ export default function ConfirmPin() {
           transactionResult = res.data;
         } else {
           const res = await api.post("/api/transactions/transfer", {
-            recipientWalletId: Number(beneficiary),
+            recipientWalletId: Number(beneficiaryId),
             amount: Number(amount),
             description: notes,
           });
           transactionResult = res.data;
         }
       } else {
-        console.log("error type", type);
         throw new Error("Unsupported transaction type");
       }
 
@@ -96,7 +92,7 @@ export default function ConfirmPin() {
             status: "success",
             type,
             trxId,
-            beneficiary,
+            beneficiary: beneficiaryName,
             sourceOfFund,
             amount,
             notes,
@@ -122,7 +118,8 @@ export default function ConfirmPin() {
     router,
     trxId,
     type,
-    beneficiary,
+    beneficiaryId,
+    beneficiaryName,
     sourceOfFund,
     time,
     isSedekah,

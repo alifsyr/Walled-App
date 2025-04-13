@@ -9,7 +9,6 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   StyleSheet,
-  ActivityIndicator,
 } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import {
@@ -164,7 +163,7 @@ export default function Login() {
               errors.email ? "border-red-500" : "border-[#f1f1f1]"
             }`}
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(text) => setEmail(text.toLowerCase())}
             autoCapitalize="none"
           />
           {errors.email && (

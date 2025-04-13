@@ -71,7 +71,7 @@ export default function ChartSwitcher({
       </Menu>
 
       {/* Chart Type Toggle */}
-      <View className="flex-row gap-2">
+      <View className="flex-row gap-3">
         <TouchableOpacity
           onPress={() => onChartChange("pie")}
           className={`p-2 rounded-lg ${

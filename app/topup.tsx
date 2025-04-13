@@ -41,8 +41,8 @@ export default function Topup() {
     if (isTopupDisabled) return;
 
     const numericAmount = Number(formattedAmount.replace(/\./g, ""));
-    if (numericAmount <= 0) {
-      Alert.alert("Invalid Amount", "Amount must be greater than 0.");
+    if (numericAmount < 10000) {
+      Alert.alert("Invalid Amount", "Minimum amount Rp10.000");
       return;
     }
     const trimmedNotes = notes.trim() || "-";

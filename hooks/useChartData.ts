@@ -12,7 +12,7 @@ export interface Transaction {
 
 interface ChartData {
   pieData: { x: string; y: number; color: string }[];
-  barData: { label: string; income: number; expense: number }[];
+  barData: { month: string; income: number; expense: number }[];
   income: number;
   expense: number;
   savingsPercentage: number;
@@ -70,21 +70,21 @@ export const useChartData = (
 
     if (mode === "weekly") {
       for (let i = 5; i >= 0; i--) {
-        const label = `Week ${6 - i}`;
-        barLabels.push(label);
-        groupedMap.set(label, { income: 0, expense: 0 });
+        const month = `Week ${6 - i}`;
+        barLabels.push(month);
+        groupedMap.set(month, { income: 0, expense: 0 });
       }
     } else {
       const count = mode === "monthly" ? 6 : 3;
       for (let i = count - 1; i >= 0; i--) {
         const d = new Date(now);
         d.setMonth(d.getMonth() - i);
-        const label = d.toLocaleString("default", {
+        const month = d.toLocaleString("default", {
           month: "short",
           year: "numeric",
         });
-        barLabels.push(label);
-        groupedMap.set(label, { income: 0, expense: 0 });
+        barLabels.push(month);
+        groupedMap.set(month, { income: 0, expense: 0 });
       }
     }
 
@@ -107,7 +107,7 @@ export const useChartData = (
 
     barFiltered.forEach((t) => {
       const date = new Date(t.transactionDate);
-      let label = "";
+      let month = "";
 
       if (mode === "weekly") {
         const diffDays = Math.floor(
@@ -115,16 +115,16 @@ export const useChartData = (
         );
         const weekIndex = Math.floor((6 * 7 - diffDays - 1) / 7);
         if (weekIndex >= 0 && weekIndex < 6) {
-          label = `Week ${weekIndex + 1}`;
+          month = `Week ${weekIndex + 1}`;
         }
       } else {
-        label = date.toLocaleString("default", {
+        month = date.toLocaleString("default", {
           month: "short",
           year: "numeric",
         });
       }
 
-      const group = groupedMap.get(label);
+      const group = groupedMap.get(month);
       if (group) {
         if (
           (t.recipientWalletId === currentUserWalletId ||
@@ -138,9 +138,9 @@ export const useChartData = (
       }
     });
 
-    const barData = barLabels.map((label) => ({
-      label,
-      ...groupedMap.get(label)!,
+    const barData = barLabels.map((month) => ({
+      month,
+      ...groupedMap.get(month)!,
     }));
 
     const totalIncome = barData.reduce((acc, cur) => acc + cur.income, 0);
